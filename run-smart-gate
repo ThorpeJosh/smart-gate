@@ -1,0 +1,20 @@
+#!/bin/bash -e
+# Smart gate run script
+
+if [ $(whoami) != "gate" ]
+then
+    echo "$0: This should only be run as the \"gate\" user." 1>&2
+    exit 1
+fi
+
+if [ -f venv/bin/activate ]
+then
+    source venv/bin/activate
+else
+    echo setting up virtual environment
+    virtualenv venv -p python3
+    source venv/bin/activate
+    pip install -r requirements.txt
+fi
+
+flock -nE 0 -x ~/gate.lock python src/main.py
