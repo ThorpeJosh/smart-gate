@@ -2,6 +2,18 @@ pipeline {
     agent any
 
     stages {
+        stage('Install packages'){
+            steps{
+                sh'''
+                apt-get update \
+                && apt-get install -yq\
+                python3-dev\
+                python3-pip\
+                virtualenv\
+                && apt-get clean && rm -rf /var/lib/apt/lists/*
+                '''
+            }
+        }
         stage('Build virtualenv') {
             steps {
                 sh '''
