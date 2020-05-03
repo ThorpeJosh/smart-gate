@@ -5,8 +5,8 @@ pipeline {
         stage('Install packages'){
             steps{
                 sh'''
-                apt-get update \
-                && apt-get install -yq\
+                sudo apt-get update \
+                && sudo apt-get install -yq\
                 python3-dev\
                 python3-pip\
                 virtualenv\
