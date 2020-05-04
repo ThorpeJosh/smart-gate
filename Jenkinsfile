@@ -15,7 +15,7 @@ pipeline {
             steps {
                 sh '''
                 . venv/bin/activate
-                pylint *.py src/*.py
+                pylint src/*.py
                 '''
             }
         }
