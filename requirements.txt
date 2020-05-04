@@ -1,1 +1,1 @@
-RPi.GPOI
+RPi.GPIO
