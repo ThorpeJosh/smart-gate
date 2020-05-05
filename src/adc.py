@@ -6,7 +6,10 @@ import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
 # Create the I2C bus
-i2c = busio.I2C(board.SCL, board.SDA)
+try:
+    i2c = busio.I2C(board.SCL, board.SDA)
+except ValueError:
+    print("I2C could not be initiated. Run raspi-config and ensure I2C is enabled")
 
 # Create the ADC object using the I2C bus
 ads = ADS.ADS1015(i2c)
