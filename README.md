@@ -3,16 +3,16 @@ This repo is for a private application of a IOT inspired raspberry pi controller
 The gate has 3 input buttons to operate it, a 24V motor, a 24V battery with solar charging, and wifi for internet connectivity.
 
 ## GPIO inputs
-* 3 push-buttons (NO, Closed grounds the pin)
+* 3 push-buttons (Normally Open, Activating button grounds the pin)
   * Outside the property, activated when entering
   * Inside the property, activated when exiting
   * On the control box mounted on the gate post, used for debugging
 * ADS1115 via I2C
-  * Shunt voltage to measure current through motor for hit detection
+  * Voltage across a shunt to measure current through motor for hit detection
   * Battery voltage for logging
 
 ## GPIO outputs
-* Gate Motor (2 pins, driving SPDT relays in a H-bridge configuration
+* Gate Motor (2 pins, driving SPDT relays in a H-bridge configuration)
 
 ## Connectivity
 Raspberry pi is fitted with a wifi radio and is connected to a personal VPN for remote access and control
@@ -30,7 +30,7 @@ Instructions for Debian based OS
 ### Installation
 Install python3 and virtualenv
 ```bash
-apt update && apt install -y python3-dev virtualenv
+sudo apt update && sudo apt install -y python3-dev virtualenv
 ```
 
 Create a python3 virtual environment
