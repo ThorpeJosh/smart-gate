@@ -54,4 +54,15 @@ From a raspberry pi run
 python src/main.py
 ```
 
+### Pylint
+To run the lint filter (Also done by Jenkins on any PRs)
+```bash
+pylnt src/*
+```
+
+### Pytest
+To run the unit tests (Also done by Jenkins on any PRs)
+```bash
+pytest
+```
 
