@@ -1,22 +1,29 @@
 """Module to handle analog reading using the ADS1115
 """
+import statistics
 import board
 import busio
-import time
-import statistics
 import adafruit_ads1x15.ads1015 as ADS
-from adafruit_ads1x15.analog_in import AnalogIn
+from adafruit_ads1x15.analog_in import AnalogIn #pylint: disable=unused-import
 
 
 class AnalogInput:
+    """Class to handle analog inputs
+    Call AnanlogInput.setup() once to setup the ADC connection,
+    Then create AnalogInput objects for each pin and get readings as follows...
+        analog_pin0 = AnalogInput(0)
+        voltage = analog_pin0.voltage()
+        value = analog_pin0.value()
+    """
     setup_lock = False
     #ADC object for the ADS1115 on the I2C bus, after setup()
     ads = None
 
-    def __init__(self, pin1, pin2 = None):
+    def __init__(self, pin1, pin2=None):
         """Initialize a new analog intput channel
         """
-        # Ensure  setup method has run
+        #pylint: disable=eval-used
+        #Ensure setup method has run
         assert self.setup_lock
 
         if pin2 is None:
@@ -31,7 +38,7 @@ class AnalogInput:
         """Wrapper for returning value of analog_channel object with median smoothing over 50ms
         """
         readings = []
-        for i in range(7):
+        for _ in range(7):
             # No need for delay as each call for reading takes 10ms
             readings.append(self.analog_channel.value)
         return statistics.median(readings)
@@ -40,7 +47,7 @@ class AnalogInput:
         """Wrapper for returning voltage of analog_channel object with median smoothing over 50ms
         """
         readings = []
-        for i in range(7):
+        for _ in range(7):
             # No need for delay as each call for reading takes 10ms
             readings.append(self.analog_channel.voltage)
         return statistics.median(readings)
@@ -62,7 +69,6 @@ class AnalogInput:
 
         # Create the ADC object using the I2C bus
         cls.ads = ADS.ADS1015(i2c)
-        
         cls.setup_lock = True
 
     def debug(self):
@@ -70,4 +76,3 @@ class AnalogInput:
         """
         while True:
             print("{:>5}\t{:>5.3f}".format(self.value(), self.voltage()))
-            time.sleep(0.1)
