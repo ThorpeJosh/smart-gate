@@ -26,5 +26,32 @@ Gate has 3 modes it can operate in
   * Permanently Closed - Gate closes and stays there until mode is changed
   
 ## Working on this repository
+Instructions for Debian based OS
+### Installation
+Install python3 and virtualenv
+```bash
+apt update && apt install -y python3-dev virtualenv
+```
+
+Create a python3 virtual environment
+```bash
+virtualenv venv -p python3
+```
+
+Activate the virtual environment
+```bash
+source venv/bin/activate
+```
+
+Install the python requirements
+```bash
+pip install -r requirements.txt
+```
+
+### Usage
+From a raspberry pi run
+```bash
+python src/main.py
+```
 
 
