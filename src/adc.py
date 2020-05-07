@@ -21,27 +21,28 @@ class AnalogInput:
 
         if pin2 is None:
             # Create single-ended input on channel 0
-            exec('chan = AnalogIn(ads, ADS.P{})'.format(pin1))
+            chan = eval('AnalogIn(self.ads, ADS.P{})'.format(pin1))
         else:
-            exec('chan = AnalogIn(ads, ADS.P{}, ADS.P{})'.format(pin1, pin2))
+	    # Create a referenced input on channel 0 (out=pin1-pin2)
+            chan = eval('AnalogIn(self.ads, ADS.P{}, ADS.P{})'.format(pin1, pin2))
         self.analog_channel = chan
 
     def value(self):
         """Wrapper for returning value of analog_channel object with median smoothing over 50ms
         """
         readings = []
-        for i in range(50):
+        for i in range(7):
+            # No need for delay as each call for reading takes 10ms
             readings.append(self.analog_channel.value)
-            time.sleep(0.01)
         return statistics.median(readings)
 
     def voltage(self):
         """Wrapper for returning voltage of analog_channel object with median smoothing over 50ms
         """
         readings = []
-        for i in range(50):
+        for i in range(7):
+            # No need for delay as each call for reading takes 10ms
             readings.append(self.analog_channel.voltage)
-            time.sleep(0.01)
         return statistics.median(readings)
 
 
