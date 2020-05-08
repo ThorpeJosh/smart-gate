@@ -17,27 +17,38 @@ class JobQueue(queue.Queue):
         self.pipe_file = pipe_file
         try:
             os.remove(self.pipe_file)
-        except FileExistsError:
+        except FileNotFoundError:
             pass
         finally:
             os.mkfifo(self.pipe_file)
         # Start reading from pipe in seperate thread
-        threading.Thread(target=self.read_fifo).start()
+        # Set daemon=True to ensure the spawned thread dies when parent does
+        threading.Thread(target=self.read_fifo, daemon=True).start()
 
     def validate_and_put(self, message):
         """Validates message is a valid command then puts it on the queue
         """
+        # Ensure message is a string
+        if not isinstance(message, str):
+            return
+        # Cleanup whitespace in string
         message = message.strip().replace('\n', '')
         if message in self.valid_commands:
             self.put(message)
         else:
             print('Warning: {} is not a valid command for queue'.format(message))
+
     def get_nonblocking(self):
         """Non-blocking version of the parent classes get() method
         """
         if self.empty():
             return None
         return self.get()
+
+    def cleanup(self):
+        """Cleanup method to delete the named pipe
+        """
+        os.remove(self.pipe_file)
 
     def read_fifo(self):
         """ Indefinite FIFO pipe reading
