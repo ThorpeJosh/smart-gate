@@ -3,6 +3,9 @@
 import os
 import threading
 import queue
+import logging
+
+logger = logging.getLogger(__name__)
 
 class JobQueue(queue.Queue):
     """Queue that holds commands for the gate to execute.
@@ -36,7 +39,7 @@ class JobQueue(queue.Queue):
         if message in self.valid_commands:
             self.put(message)
         else:
-            print('Warning: {} is not a valid command for queue'.format(message))
+            logger.warning('%s is not a valid command for queue', message)
 
     def get_nonblocking(self):
         """Non-blocking version of the parent classes get() method
@@ -61,4 +64,5 @@ class JobQueue(queue.Queue):
         while True:
             with open(self.pipe_file, 'r') as fifo:
                 for job in fifo:
+                    logger.debug('Received message via pipe: %s', job)
                     self.validate_and_put(job)
