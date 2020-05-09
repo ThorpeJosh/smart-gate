@@ -1,7 +1,7 @@
 """Unit Tests for the job_queue module
 """
-#import subprocess
-#import time
+import subprocess
+import time
 from job_queue import JobQueue
 import config
 
@@ -24,17 +24,17 @@ def test_queue():
         assert job_q.get_nonblocking() is None
     job_q.cleanup()
 
-#def test_named_pipe():
-#    """Test the FIFO named pipe
-#    """
-#    job_q = JobQueue(config.VALID_COMMANDS, FIFO_FILE)
-#
-#    # Put commands on the queue via name pipe
-#    for command in config.VALID_COMMANDS:
-#        print(subprocess.run('echo {} > {}'.format(command, FIFO_FILE), shell=True, check=True))
-#        # Delay is to allow FIFO reading thread time to process each message and avoid rare errors
-#        time.sleep(0.2)
-#    # Check the commands got placed on queue
-#    for command in config.VALID_COMMANDS:
-#        assert job_q.get() == command
-#    job_q.cleanup()
+def test_named_pipe():
+    """Test the FIFO named pipe
+    """
+    job_q = JobQueue(config.VALID_COMMANDS, FIFO_FILE)
+
+    # Put commands on the queue via name pipe
+    for command in config.VALID_COMMANDS:
+        print(subprocess.run('echo {} > {}'.format(command, FIFO_FILE), shell=True, check=True))
+        # Delay is to allow FIFO reading thread time to process each message and avoid rare errors
+        time.sleep(0.1)
+    # Check the commands got placed on queue
+    for command in config.VALID_COMMANDS:
+        assert job_q.get() == command
+    job_q.cleanup()
