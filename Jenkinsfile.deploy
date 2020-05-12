@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build virtualenv') {
+            steps {
+                sh '''
+                virtualenv venv -p python3
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        stage('Lint') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                pylint src/*.py
+                '''
+            }
+        }
+        stage('Test'){
+            steps{
+                sh'''
+                . venv/bin/activate
+                pytest
+                '''
+            }
+        }
+        stage('Deploy') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'pi_gate', keyFileVariable: 'KEY')]) {
+                    sh '''
+                    ssh -i ${KEY} -o StrictHostKeyChecking=no pi@10.8.0.37 "
+                    git clone git@github.com:ThorpeJosh/smart_gate.git
+                    cd smart_gate
+                    git checkout master
+                    bash deploy.sh"
+                    '''
+                }
+            }
+        }
+    }
+}
