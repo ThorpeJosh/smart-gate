@@ -2,10 +2,11 @@
 # Initialization/deployment script for the smart gate environment
 VALID_USER="pi"
 
-sudo apt-get update && sudo apt install -y \
+# Ussually do update first but RPi takes too long and it will have been done manually prior
+sudo apt-get install -y \
     python3-dev \
     python3-pip \
-    virtual-env
+    virtualenv
 
 # Setup the virtual environment
 if [ -f venv/bin/activate ]
