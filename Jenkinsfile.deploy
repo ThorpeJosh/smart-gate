@@ -34,7 +34,8 @@ pipeline {
                     ssh -i ${KEY} -o StrictHostKeyChecking=no pi@10.8.0.37 "
                     git clone git@github.com:ThorpeJosh/smart_gate.git
                     cd smart_gate
-                    git checkout master
+                    git fetch --all
+                    git reset --hard origin/master
                     bash deploy.sh"
                     '''
                 }
