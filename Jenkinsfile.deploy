@@ -32,6 +32,7 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'pi_gate', keyFileVariable: 'KEY')]) {
                     sh '''
                     ssh -i ${KEY} -o StrictHostKeyChecking=no pi@10.8.0.37 "
+                    pkill python
                     git clone git@github.com:ThorpeJosh/smart_gate.git
                     cd smart_gate
                     git fetch --all
