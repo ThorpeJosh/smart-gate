@@ -2,6 +2,8 @@
 # Initialization/deployment script for the smart gate environment
 VALID_USER="pi"
 
+cd /home/${VALID_USER}/smart_gate/
+
 # Ussually do update first but RPi takes too long and it will have been done manually prior
 sudo apt-get install -y \
     python3-dev \
@@ -22,5 +24,5 @@ fi
 
 #Insall crontab to run run-smart-gate every minute
 crontab -u $VALID_USER - <<EOF
-* * * * * /home/${VALID_USER}/smart_gate/run-smart-gate
+* * * * * /bin/bash /home/${VALID_USER}/smart_gate/run-smart-gate
 EOF
