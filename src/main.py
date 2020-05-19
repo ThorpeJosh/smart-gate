@@ -52,15 +52,32 @@ class Gate():
 def setup():
     """Setup to be run once at start of program
     """
+    logger.debug('Running setup()')
+    # Initialize all digital pins
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    GPIO.setup(config.MOTORPIN0, GPIO.OUT)
+    GPIO.setup(config.MOTORPIN1, GPIO.OUT)
+
+    return Gate()
 
 def main_loop():
     """Main loop
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
+    time.sleep(1)
+    print('In main loop')
 
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    while 1:
-        main_loop()
+    gate = setup()
+    try:
+        while 1:
+            main_loop()
+    finally:
+        GPIO.cleanup()
