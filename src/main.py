@@ -1,7 +1,18 @@
 """Smart gate module entry point
 """
+import os
+import time
 import logging
-#import time
+try:
+    # Only imports on a Raspberry Pi
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    # Import mock interface for non-RPi dev and set the Mock.GPIO log level to debug
+    os.environ['LOG_LEVEL'] = 'Debug'
+    import Mock.GPIO as GPIO
+import config
+
+# Create root logger
 LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
 logging.basicConfig(filename='gate.log', level=logging.DEBUG, format=LOG_FORMAT)
 logger = logging.getLogger()
