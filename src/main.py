@@ -6,6 +6,11 @@ LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
 logging.basicConfig(filename='gate.log', level=logging.DEBUG, format=LOG_FORMAT)
 logger = logging.getLogger()
 
+# Log to stdout as well
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+logger.addHandler(stream_handler)
+
 
 class Gate():
     """Gate instance
