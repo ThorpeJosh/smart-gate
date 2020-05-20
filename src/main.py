@@ -30,9 +30,6 @@ class Gate():
     current_state = 'unknown'
 
     def __init__(self):
-        self.out_button = ''
-        self.in_button = ''
-        self.box_button = ''
         self.close()
 
     def close(self):
@@ -49,10 +46,17 @@ class Gate():
         """Stop the gate
         """
 
+    @staticmethod
+    def button_callback(pin):
+        """Callback for when a button is pushed
+        """
+        print("callback on pin: ", pin)
+
 def setup():
     """Setup to be run once at start of program
     """
     logger.debug('Running setup()')
+
     # Initialize all digital pins
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -62,7 +66,13 @@ def setup():
     GPIO.setup(config.MOTORPIN0, GPIO.OUT)
     GPIO.setup(config.MOTORPIN1, GPIO.OUT)
 
-    return Gate()
+    # Button callbacks
+    GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
+                          bouncetime=1000)
+    GPIO.add_event_detect(config.BUTTON_INSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
+                          bouncetime=1000)
+    GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=gate.button_callback,
+                          bouncetime=1000)
 
 def main_loop():
     """Main loop
@@ -75,7 +85,8 @@ def main_loop():
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    gate = setup()
+    gate = Gate()
+    setup()
     try:
         while 1:
             main_loop()
