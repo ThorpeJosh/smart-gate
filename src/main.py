@@ -50,7 +50,15 @@ class Gate():
     def button_callback(pin):
         """Callback for when a button is pushed
         """
-        print("callback on pin: ", pin)
+        if pin == config.BUTTON_OUTSIDE_PIN:
+            logger.info('Outside button pressed')
+        elif pin == config.BUTTON_INSIDE_PIN:
+            logger.info('Inside button pressed')
+        elif pin == config.BUTTON_BOX_PIN:
+            logger.info('Box button pressed')
+        else:
+            logger.warning('Unknown button pressed')
+
 
 def setup():
     """Setup to be run once at start of program
