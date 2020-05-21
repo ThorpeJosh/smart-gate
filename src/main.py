@@ -3,6 +3,7 @@
 import os
 import time
 import logging
+from pathlib import Path
 try:
     # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
@@ -10,7 +11,10 @@ except RuntimeError:
     # Import mock interface for non-RPi dev and set the Mock.GPIO log level to debug
     os.environ['LOG_LEVEL'] = 'Debug'
     import Mock.GPIO as GPIO
+
+# Smart gate module imports
 import config
+from job_queue import JobQueue
 
 # Create root logger
 LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
@@ -59,6 +63,8 @@ class Gate():
         else:
             logger.warning('Unknown button pressed')
 
+        job_q.validate_and_put('open')
+
 
 def setup():
     """Setup to be run once at start of program
@@ -89,14 +95,17 @@ def main_loop():
     """
     time.sleep(1)
     print('In main loop')
+    print('Job in queue: ', job_q.get_nonblocking())
 
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     gate = Gate()
+    job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
     setup()
     try:
         while 1:
             main_loop()
     finally:
         GPIO.cleanup()
+        job_q.cleanup()
