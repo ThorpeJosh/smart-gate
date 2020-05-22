@@ -40,15 +40,22 @@ class Gate():
         """Close the gate
         """
         self.current_state = 'closing'
+        GPIO.output(config.MOTORPIN0, 0)
+        GPIO.output(config.MOTORPIN1, 1)
 
     def open(self):
         """Open the gate
         """
         self.current_state = 'opening'
+        GPIO.output(config.MOTORPIN0, 1)
+        GPIO.output(config.MOTORPIN1, 0)
 
-    def stop(self):
+    @staticmethod
+    def stop():
         """Stop the gate
         """
+        GPIO.output(config.MOTORPIN0, 1)
+        GPIO.output(config.MOTORPIN1, 1)
 
     @staticmethod
     def button_callback(pin):
@@ -77,8 +84,8 @@ def setup():
     GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    GPIO.setup(config.MOTORPIN0, GPIO.OUT)
-    GPIO.setup(config.MOTORPIN1, GPIO.OUT)
+    GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
+    GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
 
     # Button callbacks
     GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
