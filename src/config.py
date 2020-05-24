@@ -22,3 +22,9 @@ BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.75 # 10k 1k voltage divider
 
 # Commands that the gate needs to be able to handle on the job queue
 VALID_COMMANDS = ['open', 'close', 'openp', 'closep', 'resume']
+
+#store gate mode incase of restart
+SAVED_MODE_FILE = 'saved_mode.txt'
+
+#valid modes for gate operation (normal mode is default incase case of error when on start up)
+VALID_MODE = ['normal', 'lock_closed', 'lock_open']

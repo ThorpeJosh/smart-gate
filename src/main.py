@@ -33,6 +33,39 @@ class Gate():
     """
     def __init__(self):
         self.current_state = 'unknown'
+        self.current_mode = self._read_mode()
+
+    @staticmethod
+    def _write_mode(mode):
+        """Save current mode on mode change
+        """
+        with open(config.SAVED_MODE_FILE, 'w') as saved_mode:
+            saved_mode.write(mode)
+
+    @staticmethod
+    def _read_mode():
+        """Read most recent mode on start up (if mode is invalid load the default mode)
+        """
+        try:
+            with open(config.SAVED_MODE_FILE, 'r') as saved_mode:
+                mode = saved_mode.read()
+                mode = mode.strip().replace('\n', '')
+                if mode not in config.VALID_MODE:
+                    mode = config.VALID_MODE[0]
+                    logger.warning("Invalid read_mode attempted: %s", mode)
+        except FileNotFoundError:
+            mode = config.VALID_MODE[0]
+            logger.warning('Saved mode file not found')
+        return mode
+
+    def mode_change(self, new_mode):
+        """allow user to change gates current operating mode
+        """
+        if new_mode in config.VALID_MODE:
+            self.current_mode = new_mode
+            self._write_mode(new_mode)
+        else:
+            logger.warning("Invalid mode_change attempted: %s", new_mode)
 
     def _open(self):
         """Open the gate
