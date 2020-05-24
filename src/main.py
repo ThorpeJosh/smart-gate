@@ -33,6 +33,24 @@ class Gate():
     """
     def __init__(self):
         self.current_state = 'unknown'
+        self.current_mode = self._read_mode()
+
+    @staticmethod
+    def _write_mode(mode):
+        """Save current mode on mode change
+        """
+        with open(config.SAVED_MODE_FILE, 'w') as saved_mode:
+            saved_mode.write(mode)
+
+    @staticmethod
+    def _read_mode():
+        """Read most recent mode on start up (if mode in valid load default mode)
+        """
+        with open(config.SAVED_MODE_FILE, 'r') as saved_mode:
+            mode = saved_mode.read()
+            if mode not in config.VALID_MODE:
+                mode = config.VALID_MODE[0]
+        return mode
 
     def _open(self):
         """Open the gate
