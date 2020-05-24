@@ -158,20 +158,19 @@ class Gate():
         GPIO.output(config.MOTORPIN0, 1)
         GPIO.output(config.MOTORPIN1, 1)
 
-    @staticmethod
-    def button_callback(pin):
-        """Callback for when a button is pushed
-        """
-        if pin == config.BUTTON_OUTSIDE_PIN:
-            logger.info('Outside button pressed')
-        elif pin == config.BUTTON_INSIDE_PIN:
-            logger.info('Inside button pressed')
-        elif pin == config.BUTTON_BOX_PIN:
-            logger.info('Box button pressed')
-        else:
-            logger.warning('Unknown button pressed')
+def button_callback(pin):
+    """Callback for when a button is pushed
+    """
+    if pin == config.BUTTON_OUTSIDE_PIN:
+        logger.info('Outside button pressed')
+    elif pin == config.BUTTON_INSIDE_PIN:
+        logger.info('Inside button pressed')
+    elif pin == config.BUTTON_BOX_PIN:
+        logger.info('Box button pressed')
+    else:
+        logger.warning('Unknown button pressed')
 
-        job_q.validate_and_put('open')
+    job_q.validate_and_put('open')
 
 
 def setup():
@@ -189,11 +188,11 @@ def setup():
     GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
 
     # Button callbacks
-    GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
+    GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=button_callback,
                           bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_INSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
+    GPIO.add_event_detect(config.BUTTON_INSIDE_PIN, GPIO.FALLING, callback=button_callback,
                           bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=gate.button_callback,
+    GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=button_callback,
                           bouncetime=1000)
 
     # Setup Analog controller
@@ -204,8 +203,7 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    if job != 'open':
-        job = job_q.get_nonblocking()
+    job = job_q.get_nonblocking()
     if job == 'open':
         gate.current_state = 'opening'
         with job_q.mutex:
@@ -221,8 +219,8 @@ def main_loop():
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    gate = Gate()
     setup()
+    gate = Gate()
     job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
