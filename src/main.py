@@ -36,6 +36,7 @@ class Gate():
     def __init__(self):
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
+        self.shunt_pin = AnalogInput(config.SHUNT_PIN)
 
     @staticmethod
     def _write_mode(mode):
@@ -85,10 +86,9 @@ class Gate():
         self.current_state = 'opening'
         start_time = time.monotonic()
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
-        shunt_pin = AnalogInput(config.SHUNT_PIN)
         self._open()
         time.sleep(config.SHUNT_READ_DELAY)
-        while shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+        while self.shunt_pin.voltage() < config.SHUNT_THRESHOLD:
             if time.monotonic() > security_time:
                 logger.critical('Open security timer has elapsed')
                 self.current_state = 'Open time error'
@@ -133,13 +133,12 @@ class Gate():
         When called it should close the gate and handle when the task is complete,
         or an obstruction has been hit
         """
-        self.current_state = 'closinging'
+        self.current_state = 'closing'
         start_time = time.monotonic()
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
-        shunt_pin = AnalogInput(config.SHUNT_PIN)
         self._close()
         time.sleep(config.SHUNT_READ_DELAY)
-        while shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+        while self.shunt_pin.voltage() < config.SHUNT_THRESHOLD:
             if time.monotonic() > security_time:
                 logger.critical('Close security timer has elapsed')
                 self.current_state = 'Close time error'
