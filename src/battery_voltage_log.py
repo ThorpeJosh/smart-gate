@@ -7,6 +7,9 @@ import threading
 import schedule
 import config
 
+# Hide schedule logging messages
+logging.getLogger('schedule').setLevel(logging.CRITICAL)
+
 class BatteryVoltageLog():
     """Logs the battery voltage every hour to file
     """
