@@ -1,8 +1,10 @@
-import schedule
+""" Module to log battery voltage every hour
+"""
 import time
 import datetime
 import logging
 import threading
+import schedule
 import config
 
 class BatteryVoltageLog():
@@ -10,9 +12,13 @@ class BatteryVoltageLog():
     """
     def __init__(self, path, analog_pin_object):
         # Create voltage logger
-        LOG_FORMAT = '%(asctime)s : %(message)s'
-        logging.basicConfig(filename='battery_voltage.log', level=logging.INFO, format=LOG_FORMAT)
-        self.logger = logging.getLogger()
+        log_format = '%(asctime)s : %(message)s'
+        self.bat_logger = logging.getLogger('Battery_voltage')
+        self.bat_logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler(path)
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(logging.Formatter(log_format))
+        self.bat_logger.addHandler(file_handler)
 
         # Setup analog read for battery pin
         self.battery_pin = analog_pin_object
@@ -25,7 +31,8 @@ class BatteryVoltageLog():
         """
         print('This job is running.')
         print(datetime.datetime.now())
-        self.logger.info("Battery voltage: {}v".format(round(self.battery_pin.voltage() * config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1)))
+        self.bat_logger.info("Battery voltage: %sv", round(self.battery_pin.voltage() * \
+                                config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1))
 
     def start(self):
         """Start logging job
