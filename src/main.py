@@ -148,6 +148,7 @@ class Gate():
                 self.current_state = 'opening'
                 return
         self.current_state = 'closed'
+        logger.debug('Gate closed')
         return
 
     @staticmethod
