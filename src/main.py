@@ -36,6 +36,7 @@ class Gate():
     def __init__(self):
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
+        self.shunt_pin = AnalogInput(config.SHUNT_PIN)
 
     @staticmethod
     def _write_mode(mode):
@@ -82,11 +83,40 @@ class Gate():
         When called it should open the gate and handle when the task is complete,
         or an obstruction has been hit
         """
+        start_time = time.monotonic()
+        security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
         self._open()
         time.sleep(config.SHUNT_READ_DELAY)
+        while self.shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+            if time.monotonic() > security_time:
+                logger.critical('Open security timer has elapsed')
+                self.current_state = 'Open time error'
+                self._stop()
+                return
+            #this will allow for a close request to jump out of opening & skip holding
+            job = job_q.get_nonblocking()
+            if job == 'close':
+                self.current_state = 'holding'
+                return
+        self.current_state = 'opened'
+        return
 
-        time.sleep(4)
-        self.stop()
+    def hold(self):
+        """Method to control hold the gate open while cars drive through
+        When called it should hold the gate open for a set duration
+        """
+        self.current_state = 'holding'
+        start_time = time.monotonic()
+        self._stop()
+        while time.monotonic() < start_time + config.HOLD_OPEN_TIME:
+            time.sleep(0.25)
+            job = job_q.get_nonblocking()
+            #this will allow a new open request to extend the hold time by reseting it
+            if job == 'open':
+                start_time = time.monotonic()
+            #this will allow a close request to skip the rest of the holding time
+            if job == 'close':
+                return
 
     def _close(self):
         """Close the gate
@@ -99,17 +129,29 @@ class Gate():
 
     def close(self):
         """Method to control the gate closing
-        When called it should open the gate and handle when the task is complete,
+        When called it should close the gate and handle when the task is complete,
         or an obstruction has been hit
         """
+        self.current_state = 'closing'
+        start_time = time.monotonic()
+        security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
         self._close()
         time.sleep(config.SHUNT_READ_DELAY)
-
-        time.sleep(4)
-        self.stop()
+        while self.shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+            if time.monotonic() > security_time:
+                logger.critical('Close security timer has elapsed')
+                self.current_state = 'Close time error'
+                self._stop()
+                return
+            job = job_q.get_nonblocking()
+            if job == 'open':
+                self.current_state = 'opening'
+                return
+        self.current_state = 'closed'
+        return
 
     @staticmethod
-    def stop():
+    def _stop():
         """Stop the gate
         """
         logger.debug('stopping gate motor')
@@ -162,12 +204,17 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    print('In main loop')
-    job = job_q.get()
-    print('Job in queue: ', job)
+    if job != 'open':
+        job = job_q.get_nonblocking()
     if job == 'open':
+        gate.current_state = 'opening'
+        with job_q.mutex:
+            job_q.queue.clear()
+    if gate.current_state == 'opening':
         gate.open()
-        time.sleep(4)
+    if gate.current_state == 'opened':
+        gate.hold()
+    if gate.current_state == 'holding':
         gate.close()
 
 
