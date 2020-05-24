@@ -14,6 +14,8 @@ except RuntimeError:
 
 # Smart gate module imports
 import config
+from adc import AnalogInput
+from battery_voltage_log import BatteryVoltageLog
 from job_queue import JobQueue
 
 # Create root logger
@@ -136,7 +138,7 @@ def setup():
     logger.debug('Running setup()')
 
     # Initialize all digital pins
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
     GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -152,6 +154,9 @@ def setup():
     GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=gate.button_callback,
                           bouncetime=1000)
 
+    # Setup Analog controller
+    AnalogInput.setup()
+
 def main_loop():
     """Main loop
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
@@ -166,11 +171,14 @@ def main_loop():
         gate.close()
 
 
+
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     gate = Gate()
-    job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
     setup()
+    job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
+    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG)
+    battery_logger.start()
     try:
         while 1:
             main_loop()
