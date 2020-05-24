@@ -44,11 +44,12 @@ class Gate():
 
     @staticmethod
     def _read_mode():
-        """Read most recent mode on start up (if mode in valid load default mode)
+        """Read most recent mode on start up (if mode is invalid load the default mode)
         """
         try:
             with open(config.SAVED_MODE_FILE, 'r') as saved_mode:
                 mode = saved_mode.read()
+                mode = mode.strip().replace('\n', '')
                 if mode not in config.VALID_MODE:
                     mode = config.VALID_MODE[0]
                     logger.warning("Invalid read_mode attempted: %s", mode)
