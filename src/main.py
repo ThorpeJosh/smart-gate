@@ -94,6 +94,11 @@ class Gate():
                 self.current_state = 'Open time error'
                 self._stop()
                 return
+            #this will allow for a close request to jump out of opening & skid holding
+            job = job_q.get_nonblocking()
+            if job == 'Close':
+                self.current_state = 'holding'
+                return
         self.current_state = 'opened'
         return
 
@@ -105,9 +110,14 @@ class Gate():
         start_time = time.monotonic()
         self._stop()
         while time.monotonic() < start_time + config.HOLD_OPEN_TIME:
+            time.sleep(0.25)
             job = job_q.get_nonblocking()
+            #this will allow a new open request to extend the hold time by reseting it
             if job == 'open':
                 start_time = time.monotonic()
+            #this will allow a close request to skip the rest of the holding time
+            if job == 'close':
+                return
 
     def _close(self):
         """Close the gate
@@ -137,7 +147,6 @@ class Gate():
                 return
             job = job_q.get_nonblocking()
             if job == 'open':
-                start_time = time.monotonic()
                 return
         self.current_state = 'Closed'
         return
@@ -196,7 +205,8 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    job = job_q.get_nonblocking()
+    if job != 'open':
+        job = job_q.get_nonblocking()
     if job == 'open':
         with job_q.mutex:
             job_q.queue.clear()
