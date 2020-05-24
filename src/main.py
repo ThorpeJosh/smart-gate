@@ -177,7 +177,8 @@ if __name__ == '__main__':
     gate = Gate()
     setup()
     job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
-    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG)
+    battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
+    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
     battery_logger.start()
     try:
         while 1:
