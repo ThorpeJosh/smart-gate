@@ -83,7 +83,6 @@ class Gate():
         When called it should open the gate and handle when the task is complete,
         or an obstruction has been hit
         """
-        self.current_state = 'opening'
         start_time = time.monotonic()
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
         self._open()
@@ -94,9 +93,9 @@ class Gate():
                 self.current_state = 'Open time error'
                 self._stop()
                 return
-            #this will allow for a close request to jump out of opening & skid holding
+            #this will allow for a close request to jump out of opening & skip holding
             job = job_q.get_nonblocking()
-            if job == 'Close':
+            if job == 'close':
                 self.current_state = 'holding'
                 return
         self.current_state = 'opened'
@@ -146,8 +145,9 @@ class Gate():
                 return
             job = job_q.get_nonblocking()
             if job == 'open':
+                self.current_state = 'opening'
                 return
-        self.current_state = 'Closed'
+        self.current_state = 'closed'
         return
 
     @staticmethod
@@ -207,8 +207,10 @@ def main_loop():
     if job != 'open':
         job = job_q.get_nonblocking()
     if job == 'open':
+        gate.current_state = 'opening'
         with job_q.mutex:
             job_q.queue.clear()
+    if gate.current_state == 'opening':
         gate.open()
     if gate.current_state == 'opened':
         gate.hold()
