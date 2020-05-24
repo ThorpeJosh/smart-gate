@@ -102,8 +102,12 @@ class Gate():
         When called it should hold the gate open for a set duration
         """
         self.current_state = 'holding'
+        start_time = time.monotonic()
         self._stop()
-        time.sleep(config.HOLD_OPEN_TIME)
+        while time.monotonic() < start_time + config.HOLD_OPEN_TIME:
+            job = job_q.get_nonblocking()
+            if job == 'open':
+                start_time = time.monotonic()
 
     def _close(self):
         """Close the gate
@@ -130,6 +134,10 @@ class Gate():
                 logger.critical('Close security timer has elapsed')
                 self.current_state = 'Close time error'
                 self._stop()
+                return
+            job = job_q.get_nonblocking()
+            if job == 'open':
+                start_time = time.monotonic()
                 return
         self.current_state = 'Closed'
         return
@@ -188,9 +196,7 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    print('In main loop')
-    job = job_q.get()
-    print('Job in queue: ', job)
+    job = job_q.get_nonblocking()
     if job == 'open':
         with job_q.mutex:
             job_q.queue.clear()
