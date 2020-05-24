@@ -31,24 +31,55 @@ class Gate():
     """Gate instance
     This keeps track of all the gate methods (functions) and the related status/vaiables
     """
-    current_state = 'unknown'
-
     def __init__(self):
-        self.close()
+        self.current_state = 'unknown'
 
-    def close(self):
-        """Close the gate
-        """
-        self.current_state = 'closing'
-
-    def open(self):
+    def _open(self):
         """Open the gate
         """
         self.current_state = 'opening'
+        logger.debug('opening gate')
+        GPIO.output(config.MOTORPIN0, 1)
+        GPIO.output(config.MOTORPIN1, 0)
 
-    def stop(self):
+    def open(self):
+        """Method to control the gate opening
+        When called it should open the gate and handle when the task is complete,
+        or an obstruction has been hit
+        """
+        self._open()
+        time.sleep(config.SHUNT_READ_DELAY)
+
+        time.sleep(4)
+        self.stop()
+
+    def _close(self):
+        """Close the gate
+        """
+        self.current_state = 'closing'
+        logger.debug('closing gate')
+        GPIO.output(config.MOTORPIN0, 0)
+        GPIO.output(config.MOTORPIN1, 1)
+
+
+    def close(self):
+        """Method to control the gate closing
+        When called it should open the gate and handle when the task is complete,
+        or an obstruction has been hit
+        """
+        self._close()
+        time.sleep(config.SHUNT_READ_DELAY)
+
+        time.sleep(4)
+        self.stop()
+
+    @staticmethod
+    def stop():
         """Stop the gate
         """
+        logger.debug('stopping gate motor')
+        GPIO.output(config.MOTORPIN0, 1)
+        GPIO.output(config.MOTORPIN1, 1)
 
     @staticmethod
     def button_callback(pin):
@@ -77,8 +108,8 @@ def setup():
     GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    GPIO.setup(config.MOTORPIN0, GPIO.OUT)
-    GPIO.setup(config.MOTORPIN1, GPIO.OUT)
+    GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
+    GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
 
     # Button callbacks
     GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=gate.button_callback,
@@ -93,9 +124,13 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    time.sleep(1)
     print('In main loop')
-    print('Job in queue: ', job_q.get_nonblocking())
+    job = job_q.get()
+    print('Job in queue: ', job)
+    if job == 'open':
+        gate.open()
+        time.sleep(4)
+        gate.close()
 
 
 if __name__ == '__main__':
