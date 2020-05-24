@@ -82,11 +82,28 @@ class Gate():
         When called it should open the gate and handle when the task is complete,
         or an obstruction has been hit
         """
+        self.current_state = 'opening'
+        start_time = time.monotonic()
+        security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
+        shunt_pin = AnalogInput(config.SHUNT_PIN)
         self._open()
         time.sleep(config.SHUNT_READ_DELAY)
+        while shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+            if time.monotonic() > security_time:
+                logger.critical('Open security timer has elapsed')
+                self.current_state = 'Open time error'
+                self._stop()
+                return
+        self.current_state = 'opened'
+        return
 
-        time.sleep(4)
-        self.stop()
+    def hold(self):
+        """Method to control hold the gate open while cars drive through
+        When called it should hold the gate open for a set duration
+        """
+        self.current_state = 'holding'
+        self._stop()
+        time.sleep(config.HOLD_OPEN_TIME)
 
     def _close(self):
         """Close the gate
@@ -99,17 +116,26 @@ class Gate():
 
     def close(self):
         """Method to control the gate closing
-        When called it should open the gate and handle when the task is complete,
+        When called it should close the gate and handle when the task is complete,
         or an obstruction has been hit
         """
+        self.current_state = 'closinging'
+        start_time = time.monotonic()
+        security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
+        shunt_pin = AnalogInput(config.SHUNT_PIN)
         self._close()
         time.sleep(config.SHUNT_READ_DELAY)
-
-        time.sleep(4)
-        self.stop()
+        while shunt_pin.voltage() < config.SHUNT_THRESHOLD:
+            if time.monotonic() > security_time:
+                logger.critical('Close security timer has elapsed')
+                self.current_state = 'Close time error'
+                self._stop()
+                return
+        self.current_state = 'Closed'
+        return
 
     @staticmethod
-    def stop():
+    def _stop():
         """Stop the gate
         """
         logger.debug('stopping gate motor')
@@ -166,8 +192,12 @@ def main_loop():
     job = job_q.get()
     print('Job in queue: ', job)
     if job == 'open':
+        with job_q.mutex:
+            job_q.queue.clear()
         gate.open()
-        time.sleep(4)
+    if gate.current_state == 'opened':
+        gate.hold()
+    if gate.current_state == 'holding':
         gate.close()
 
 
