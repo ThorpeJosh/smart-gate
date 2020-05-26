@@ -8,7 +8,8 @@ GPIO_PINS = [config.MOTORPIN0,
              config.BUTTON_INSIDE_PIN,
              config.BUTTON_BOX_PIN]
 
-ANALOG_PINS = [config.SHUNT_PIN,
+ANALOG_PINS = [config.SHUNT_PIN0,
+               config.SHUNT_PIN1,
                config.BATTERY_VOLTAGE_PIN]
 
 def test_gpio_pins():
