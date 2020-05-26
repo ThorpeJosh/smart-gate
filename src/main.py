@@ -36,7 +36,7 @@ class Gate():
     def __init__(self):
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
-        self.shunt_pin = AnalogInput(config.SHUNT_PIN)
+        self.shunt_pin = AnalogInput(config.SHUNT_PIN0, config.SHUNT_PIN1)
 
     @staticmethod
     def _write_mode(mode):
