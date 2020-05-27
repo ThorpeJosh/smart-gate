@@ -3,7 +3,6 @@
 import os
 import time
 import logging
-from pathlib import Path
 try:
     # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
@@ -20,7 +19,7 @@ from job_queue import JobQueue
 
 # Create root logger
 LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
-logging.basicConfig(filename='gate.log', level=logging.DEBUG, format=LOG_FORMAT)
+logging.basicConfig(filename=config.GATE_LOG, level=logging.DEBUG, format=LOG_FORMAT)
 logger = logging.getLogger()
 
 # Log to stdout as well
@@ -222,7 +221,7 @@ if __name__ == '__main__':
     logger.info('Starting smart gate')
     setup()
     gate = Gate()
-    job_q = JobQueue(config.VALID_COMMANDS, os.path.join(Path.home(), 'pipe'))
+    job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
     battery_logger.start()
