@@ -76,3 +76,7 @@ pytest
 * Email alerts
 * Away mode
 * Capture picture
+
+### Phase 3
+* Number Plate detection
+* Vehicle/person detection
