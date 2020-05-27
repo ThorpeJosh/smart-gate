@@ -27,7 +27,7 @@ class BatteryVoltageLog():
         self.battery_pin = analog_pin_object
 
         # Schedule job
-        schedule.every(1).minute.at(':00').do(self.scheduled_job)
+        schedule.every(1).hour.at(':00').do(self.scheduled_job)
 
     def scheduled_job(self):
         """scheduled job
