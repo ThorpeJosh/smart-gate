@@ -213,7 +213,7 @@ def main_loop():
     Similair to the MainLoop() on an arduino, this will loop through indefinately,
     calling all required inputs and outputs to make the gate function
     """
-    job = job_q.get_nonblocking()
+    job = job_q.get()
     if job == 'open':
         gate.current_state = 'opening'
         with job_q.mutex:
