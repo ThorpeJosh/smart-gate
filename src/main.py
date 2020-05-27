@@ -98,6 +98,7 @@ class Gate():
             if job == 'close':
                 self.current_state = 'holding'
                 return
+        self._stop()
         self.current_state = 'opened'
         return
 
@@ -107,7 +108,6 @@ class Gate():
         """
         self.current_state = 'holding'
         start_time = time.monotonic()
-        self._stop()
         while time.monotonic() < start_time + config.HOLD_OPEN_TIME:
             time.sleep(0.25)
             job = job_q.get_nonblocking()
@@ -147,6 +147,7 @@ class Gate():
             if job == 'open':
                 self.current_state = 'opening'
                 return
+        self._stop()
         self.current_state = 'closed'
         logger.debug('Gate closed')
         return
@@ -189,9 +190,9 @@ def setup():
 
     # Initialize all digital pins
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN)
+    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN)
+    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN)
 
     GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
     GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
