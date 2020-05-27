@@ -66,3 +66,13 @@ To run the unit tests (Also done by Jenkins on any PRs)
 pytest
 ```
 
+## To-do list
+### Phase 1
+* Collision detection on closing (Immediately reopen)
+* Log warning and critical battery voltages
+* Modes (normal_home, normal_away, lock_open, lock_close). Home and away modes are same for now
+
+### Phase 2
+* Email alerts
+* Away mode
+* Capture picture
