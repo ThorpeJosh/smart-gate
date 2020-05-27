@@ -190,9 +190,9 @@ def setup():
 
     # Initialize all digital pins
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN)
+    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN)
+    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN)
 
     GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
     GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
