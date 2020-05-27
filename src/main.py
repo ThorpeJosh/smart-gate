@@ -3,6 +3,7 @@
 import os
 import time
 import logging
+import statistics
 try:
     # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
@@ -161,6 +162,14 @@ class Gate():
 def button_callback(pin):
     """Callback for when a button is pushed
     """
+    readings = []
+    for _ in range(100):
+        readings.append(GPIO.input(pin))
+
+    # Double check trigger was real button push and not an anomoly
+    if round(statistics.mean(readings)):
+        return
+
     if pin == config.BUTTON_OUTSIDE_PIN:
         logger.info('Outside button pressed')
     elif pin == config.BUTTON_INSIDE_PIN:

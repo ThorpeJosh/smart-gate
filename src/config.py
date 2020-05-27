@@ -40,4 +40,3 @@ FIFO_FILE = os.path.join(Path.home(), 'pipe')
 
 # Store gate mode incase of restart
 SAVED_MODE_FILE = os.path.join(Path.home(), 'saved_mode.txt')
-
