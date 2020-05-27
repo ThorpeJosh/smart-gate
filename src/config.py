@@ -30,13 +30,13 @@ VALID_COMMANDS = ['open', 'close', 'openp', 'closep', 'resume']
 VALID_MODE = ['normal', 'lock_closed', 'lock_open']
 
 # Battery Log
-BATTERY_VOLTAGE_LOG = os.path.join(Path.home(), 'battery_voltage.log')
+BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), 'battery_voltage.log')
 
 # Gate Log
-GATE_LOG = os.path.join(Path.home(), 'gate.log')
+GATE_LOG = os.path.join(str(Path.home()), 'gate.log')
 
 # Named pipe
-FIFO_FILE = os.path.join(Path.home(), 'pipe')
+FIFO_FILE = os.path.join(str(Path.home()), 'pipe')
 
 # Store gate mode incase of restart
-SAVED_MODE_FILE = os.path.join(Path.home(), 'saved_mode.txt')
+SAVED_MODE_FILE = os.path.join(str(Path.home()), 'saved_mode.txt')
