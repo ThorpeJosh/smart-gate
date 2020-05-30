@@ -1,7 +1,6 @@
 """ Module to log battery voltage every hour
 """
 import time
-import datetime
 import logging
 import threading
 import schedule
@@ -32,10 +31,14 @@ class BatteryVoltageLog():
     def scheduled_job(self):
         """scheduled job
         """
-        print('This job is running.')
-        print(datetime.datetime.now())
-        self.bat_logger.info("Battery voltage: %sv", round(self.battery_pin.voltage() * \
-                                config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1))
+        bat_volt = round(self.battery_pin.voltage() * \
+                                config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1)
+        if 24 < bat_volt < 29.4:
+            self.bat_logger.info("Battery voltage: %sv", bat_volt)
+        if 22 > bat_volt <= 24:
+            self.bat_logger.warning("Battery voltage: %sv", bat_volt)
+        else:
+            self.bat_logger.critical("Battery voltage: %sv", bat_volt)
 
     def start(self):
         """Start logging job
