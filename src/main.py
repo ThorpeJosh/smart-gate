@@ -20,8 +20,14 @@ from job_queue import JobQueue
 
 # Create root logger
 LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
-logging.basicConfig(filename=config.GATE_LOG, level=logging.DEBUG, format=LOG_FORMAT)
-logger = logging.getLogger()
+logger = logging.getLogger('root')
+logger.setLevel(logging.DEBUG)
+
+# Log to file
+handler = logging.FileHandler(config.GATE_LOG)
+handler.setLevel(logging.DEBUG)
+handler.setFormatter(logging.Formatter(LOG_FORMAT))
+logger.addHandler(handler)
 
 # Log to stdout as well
 stream_handler = logging.StreamHandler()
