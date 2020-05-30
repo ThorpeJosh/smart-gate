@@ -9,6 +9,8 @@ import config
 # Hide schedule logging messages
 logging.getLogger('schedule').setLevel(logging.CRITICAL)
 
+root_logger = logging.getLogger('root')
+
 class BatteryVoltageLog():
     """Logs the battery voltage every hour to file
     """
@@ -36,8 +38,10 @@ class BatteryVoltageLog():
             self.bat_logger.info("Battery voltage: %sv", bat_volt)
         if 22 > bat_volt <= 24:
             self.bat_logger.warning("Battery voltage: %sv", bat_volt)
+            root_logger.warning("Battery voltage: %sv", bat_volt)
         else:
             self.bat_logger.critical("Battery voltage: %sv", bat_volt)
+            root_logger.critical("Battery voltage: %sv", bat_volt)
 
     def start(self):
         """Start logging job
