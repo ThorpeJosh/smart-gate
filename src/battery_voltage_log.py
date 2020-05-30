@@ -15,7 +15,7 @@ class BatteryVoltageLog():
     def __init__(self, path, analog_pin_object):
         # Create voltage logger
         log_format = '%(asctime)s : %(message)s'
-        self.bat_logger = logging.getLogger('Battery_voltage')
+        self.bat_logger = logging.getLogger(__name__)
         self.bat_logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(path)
         file_handler.setLevel(logging.INFO)
