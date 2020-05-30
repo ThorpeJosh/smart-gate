@@ -31,8 +31,7 @@ class BatteryVoltageLog():
     def scheduled_job(self):
         """scheduled job
         """
-        bat_volt = round(self.battery_pin.voltage() * \
-                                config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1)
+        bat_volt = round(self.battery_pin.voltage() * config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1)
         if 24 < bat_volt < 29.4:
             self.bat_logger.info("Battery voltage: %sv", bat_volt)
         if 22 > bat_volt <= 24:
