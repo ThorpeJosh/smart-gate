@@ -5,7 +5,7 @@ import threading
 import queue
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('root')
 
 class JobQueue(queue.Queue):
     """Queue that holds commands for the gate to execute.
