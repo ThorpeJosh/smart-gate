@@ -70,7 +70,6 @@ pytest
 ### Phase 1
 * Move gate class out of the main module (into a gate.py module)
 * Collision detection on closing (Immediately reopen)
-* Bug - Remove batter voltage logs from main gate.log
 * Bug - Open command from pipe doesn't work when gate is closing
 * Modes (normal_home, normal_away, lock_open, lock_close). Home and away modes are same for now
 
