@@ -3,10 +3,10 @@
 # Smart gate module imports
 import os
 import time
+import logging
 import config
 from adc import AnalogInput
-from main import job_q
-from main import logger
+from job_queue import JobQueue
 try:
     # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
@@ -16,6 +16,11 @@ except RuntimeError:
     import Mock.GPIO as GPIO
 
 
+# Create root logger
+LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
+logging.basicConfig(filename=config.GATE_LOG, level=logging.DEBUG, format=LOG_FORMAT)
+logger = logging.getLogger()
+
 class Gate():
     """Gate instance
     This keeps track of all the gate methods (functions) and the related status/vaiables
@@ -24,6 +29,7 @@ class Gate():
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
         self.shunt_pin = AnalogInput(config.SHUNT_PIN0, config.SHUNT_PIN1)
+        self.job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
 
     @staticmethod
     def _write_mode(mode):
@@ -81,7 +87,7 @@ class Gate():
                 self._stop()
                 return
             #this will allow for a close request to jump out of opening & skip holding
-            job = job_q.get_nonblocking()
+            job = self.job_q.get_nonblocking()
             if job == 'close':
                 self.current_state = 'holding'
                 return
@@ -97,7 +103,7 @@ class Gate():
         start_time = time.monotonic()
         while time.monotonic() < start_time + config.HOLD_OPEN_TIME:
             time.sleep(0.25)
-            job = job_q.get_nonblocking()
+            job = self.job_q.get_nonblocking()
             #this will allow a new open request to extend the hold time by reseting it
             if job == 'open':
                 start_time = time.monotonic()
@@ -130,7 +136,7 @@ class Gate():
                 self.current_state = 'Close time error'
                 self._stop()
                 return
-            job = job_q.get_nonblocking()
+            job = self.job_q.get_nonblocking()
             if job == 'open':
                 self.current_state = 'opening'
                 return
