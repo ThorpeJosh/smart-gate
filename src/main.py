@@ -13,7 +13,7 @@ except RuntimeError:
 
 # Smart gate module imports
 import config
-import gate
+from gate import Gate
 from adc import AnalogInput
 from battery_voltage_log import BatteryVoltageLog
 from job_queue import JobQueue
@@ -104,8 +104,8 @@ def main_loop():
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     setup()
-    gate = gate.Gate()
     job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
+    gate = Gate(job_q)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
     battery_logger.start()

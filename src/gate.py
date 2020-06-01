@@ -6,7 +6,6 @@ import time
 import logging
 import config
 from adc import AnalogInput
-from job_queue import JobQueue
 try:
     # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
@@ -25,11 +24,11 @@ class Gate():
     """Gate instance
     This keeps track of all the gate methods (functions) and the related status/vaiables
     """
-    def __init__(self):
+    def __init__(self, queue):
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
         self.shunt_pin = AnalogInput(config.SHUNT_PIN0, config.SHUNT_PIN1)
-        self.job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
+        self.job_q = queue
 
     @staticmethod
     def _write_mode(mode):
