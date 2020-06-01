@@ -4,15 +4,14 @@
 import os
 import time
 import logging
-import config
-from adc import AnalogInput
+# Import of either real or mock GPIO library.
 try:
-    # Only imports on a Raspberry Pi
     import RPi.GPIO as GPIO
 except RuntimeError:
-    # Import mock interface for non-RPi dev and set the Mock.GPIO log level to debug
     os.environ['LOG_LEVEL'] = 'Debug'
     import Mock.GPIO as GPIO
+import config
+from adc import AnalogInput
 
 
 # Create root logger

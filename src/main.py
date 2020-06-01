@@ -4,10 +4,10 @@ import os
 import logging
 import statistics
 try:
-    # Only imports on a Raspberry Pi
+    # RPi.GPIO raises a RuntimeError when imported on non-RPi devices
     import RPi.GPIO as GPIO
 except RuntimeError:
-    # Import mock interface for non-RPi dev and set the Mock.GPIO log level to debug
+    # Import mock interface for non-RPi devices and set the Mock.GPIO log level to debug
     os.environ['LOG_LEVEL'] = 'Debug'
     import Mock.GPIO as GPIO
 
