@@ -31,8 +31,8 @@ class AnalogInput:
             raise ValueError('AnalogInput.setup() has not been called')
 
         if self.mock:
-            self.mock_value = None
-            self.mock_voltage = None
+            self.mock_value = 0
+            self.mock_voltage = 0
             return
 
         if pin2 is None:
