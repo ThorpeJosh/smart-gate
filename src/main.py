@@ -1,6 +1,5 @@
 """Smart gate module entry point
 """
-import time
 import logging
 import gpiozero
 # Smart gate module imports
