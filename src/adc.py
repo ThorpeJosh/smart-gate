@@ -1,11 +1,12 @@
 """Module to handle analog reading using the ADS1115
 """
+import logging
 import statistics
-import board
 import busio
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn #pylint: disable=unused-import
 
+logger = logging.getLogger('root')
 
 class AnalogInput:
     """Class to handle analog inputs
@@ -18,13 +19,21 @@ class AnalogInput:
     setup_lock = False
     #ADC object for the ADS1115 on the I2C bus, after setup()
     ads = None
+    # If true then this is running on a non-RPi device
+    mock = None
 
     def __init__(self, pin1, pin2=None):
         """Initialize a new analog intput channel
         """
         #pylint: disable=eval-used
         #Ensure setup method has run
-        assert self.setup_lock
+        if not self.setup_lock:
+            raise ValueError('AnalogInput.setup() has not been called')
+
+        if self.mock:
+            self.mock_value = None
+            self.mock_voltage = None
+            return
 
         if pin2 is None:
             # Create single-ended input on channel 0
@@ -37,6 +46,9 @@ class AnalogInput:
     def value(self):
         """Wrapper for returning value of analog_channel object with median smoothing over 50ms
         """
+        if self.mock:
+            return self.mock_value
+
         readings = []
         for _ in range(7):
             # No need for delay as each call for reading takes 10ms
@@ -46,6 +58,9 @@ class AnalogInput:
     def voltage(self):
         """Wrapper for returning voltage of analog_channel object with median smoothing over 50ms
         """
+        if self.mock:
+            return self.mock_voltage
+
         readings = []
         for _ in range(7):
             # No need for delay as each call for reading takes 10ms
@@ -60,6 +75,11 @@ class AnalogInput:
         """
         if cls.setup_lock:
             raise ValueError('AnalogInput.setup() has already been called')
+
+        if cls.mock:
+            print('mock adc setup')
+            cls.setup_lock = True
+            return
 
         # Create the I2C bus
         try:
@@ -76,3 +96,11 @@ class AnalogInput:
         """
         while True:
             print("{:>5}\t{:>5.3f}".format(self.value(), self.voltage()))
+
+
+try:
+    import board
+    AnalogInput.mock = False
+except NotImplementedError:
+    AnalogInput.mock = True
+    logger.critical('Using mock AnalogInput')
