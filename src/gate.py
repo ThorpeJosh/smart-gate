@@ -1,15 +1,9 @@
 """Smart gate class module
 """
 # Smart gate module imports
-import os
 import time
 import logging
-# Import of either real or mock GPIO library.
-try:
-    import RPi.GPIO as GPIO
-except RuntimeError:
-    os.environ['LOG_LEVEL'] = 'Debug'
-    import Mock.GPIO as GPIO
+import gpiozero
 import config
 from adc import AnalogInput
 
@@ -27,6 +21,8 @@ class Gate():
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
         self.shunt_pin = AnalogInput(config.SHUNT_PIN0, config.SHUNT_PIN1)
+        self.motor_pin0 = gpiozero.OutputDevice(config.MOTORPIN0, active_high=False)
+        self.motor_pin1 = gpiozero.OutputDevice(config.MOTORPIN1, active_high=False)
         self.job_q = queue
 
     @staticmethod
@@ -66,8 +62,8 @@ class Gate():
         """
         self.current_state = 'opening'
         logger.debug('opening gate')
-        GPIO.output(config.MOTORPIN0, 1)
-        GPIO.output(config.MOTORPIN1, 0)
+        self.motor_pin0.off()
+        self.motor_pin1.on()
 
     def open(self):
         """Method to control the gate opening
@@ -114,9 +110,8 @@ class Gate():
         """
         self.current_state = 'closing'
         logger.debug('closing gate')
-        GPIO.output(config.MOTORPIN0, 0)
-        GPIO.output(config.MOTORPIN1, 1)
-
+        self.motor_pin0.on()
+        self.motor_pin1.off()
 
     def close(self):
         """Method to control the gate closing
@@ -143,10 +138,9 @@ class Gate():
         logger.debug('Gate closed')
         return
 
-    @staticmethod
-    def _stop():
+    def _stop(self):
         """Stop the gate
         """
         logger.debug('stopping gate motor')
-        GPIO.output(config.MOTORPIN0, 1)
-        GPIO.output(config.MOTORPIN1, 1)
+        self.motor_pin0.off()
+        self.motor_pin1.off()

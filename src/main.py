@@ -1,16 +1,8 @@
 """Smart gate module entry point
 """
-import os
+import time
 import logging
-import statistics
-try:
-    # RPi.GPIO raises a RuntimeError when imported on non-RPi devices
-    import RPi.GPIO as GPIO
-except RuntimeError:
-    # Import mock interface for non-RPi devices and set the Mock.GPIO log level to debug
-    os.environ['LOG_LEVEL'] = 'Debug'
-    import Mock.GPIO as GPIO
-
+import gpiozero
 # Smart gate module imports
 import config
 from gate import Gate
@@ -34,17 +26,10 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(stream_handler)
 
-def button_callback(pin):
+def button_callback(button):
     """Callback for when a button is pushed
     """
-    readings = []
-    for _ in range(100):
-        readings.append(GPIO.input(pin))
-
-    # Double check trigger was real button push and not an anomoly
-    if round(statistics.mean(readings)):
-        return
-
+    pin = button.pin.number
     if pin == config.BUTTON_OUTSIDE_PIN:
         logger.info('Outside button pressed')
     elif pin == config.BUTTON_INSIDE_PIN:
@@ -62,25 +47,19 @@ def setup():
     """
     logger.debug('Running setup()')
 
-    # Initialize all digital pins
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN)
-    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN)
-    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN)
-
-    GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
-    GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
+    # Initialize input pins
+    outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
+    inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
+    box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
 
     # Button callbacks
-    GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_INSIDE_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
+    outside_button.when_pressed = button_callback
+    inside_button.when_pressed = button_callback
+    box_button.when_pressed = button_callback
 
     # Setup Analog controller
     AnalogInput.setup()
+
 
 def main_loop():
     """Main loop
@@ -100,7 +79,6 @@ def main_loop():
         gate.close()
 
 
-
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     setup()
@@ -113,5 +91,4 @@ if __name__ == '__main__':
         while 1:
             main_loop()
     finally:
-        GPIO.cleanup()
         job_q.cleanup()
