@@ -1,18 +1,17 @@
 """Unit Tests for the job_queue module
 """
+import os
 import subprocess
-import getpass
 import time
-import pytest
 from job_queue import JobQueue
 import config
 
-FIFO_FILE = '/tmp/fifo'
 
-def test_queue():
+def test_queue(tmp_path):
     """Testing just the modified queue put and get methods
     """
-    job_q = JobQueue(config.VALID_COMMANDS, FIFO_FILE)
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    job_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     # Check queue is empty
     assert job_q.get_nonblocking() is None
     # Check valid commands work
@@ -25,19 +24,22 @@ def test_queue():
         job_q.validate_and_put(command)
         assert job_q.get_nonblocking() is None
     job_q.cleanup()
+    del job_q
 
-@pytest.mark.skipif(getpass.getuser() == 'jenkins', reason="Jenkins fails for unknown reasons")
-def test_named_pipe():
+
+def test_named_pipe(tmp_path):
     """Test the FIFO named pipe
     """
-    job_q = JobQueue(config.VALID_COMMANDS, FIFO_FILE)
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    job_q = JobQueue(config.VALID_COMMANDS, fifo_file)
 
     # Put commands on the queue via name pipe
     for command in config.VALID_COMMANDS:
-        print(subprocess.run('echo {} > {}'.format(command, FIFO_FILE), shell=True, check=True))
+        print(subprocess.run('echo {} > {}'.format(command, fifo_file), shell=True, check=True))
         # Delay is to allow FIFO reading thread time to process each message and avoid rare errors
-        time.sleep(0.1)
+        time.sleep(0.2)
     # Check the commands got placed on queue
     for command in config.VALID_COMMANDS:
         assert job_q.get() == command
     job_q.cleanup()
+    del job_q

@@ -1,6 +1,7 @@
 """Module for the job queue and named pipe (FIFO) system
 """
 import os
+import subprocess
 import threading
 import queue
 import logging
@@ -26,7 +27,8 @@ class JobQueue(queue.Queue):
             os.mkfifo(self.pipe_file)
         # Start reading from pipe in seperate thread
         # Set daemon=True to ensure the spawned thread dies when parent does
-        threading.Thread(target=self.read_fifo, daemon=True).start()
+        self.read_thread = threading.Thread(target=self.read_fifo, daemon=True)
+        self.read_thread.start()
 
     def validate_and_put(self, message):
         """Validates message is a valid command then puts it on the queue
@@ -49,8 +51,10 @@ class JobQueue(queue.Queue):
         return self.get()
 
     def cleanup(self):
-        """Cleanup method to delete the named pipe
+        """Cleanup method to delete the named pipe and kill thread that was reading it
         """
+        # Send kill command to the child process
+        print(subprocess.run('echo {} > {}'.format('kill', self.pipe_file), shell=True, check=True))
         os.remove(self.pipe_file)
 
     def read_fifo(self):
@@ -66,3 +70,6 @@ class JobQueue(queue.Queue):
                 for job in fifo:
                     logger.debug('Received message via pipe: %s', job)
                     self.validate_and_put(job)
+                    if job.strip().replace('\n', '') == 'kill':
+                        logger.warning('Received kill command on read_fifo thread')
+                        return

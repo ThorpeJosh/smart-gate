@@ -1,6 +1,7 @@
 """ Test module for the gate class
 """
 import time
+import os
 import logging
 import pytest
 from gpiozero import Device
@@ -18,11 +19,12 @@ Device.pin_factory = factory
 factory.reset()
 
 
-def test_motor_pins():
+def test_motor_pins(tmp_path):
     """ Testing open method
     """
     #pylint: disable=protected-access
-    test_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pip')
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
@@ -36,15 +38,18 @@ def test_motor_pins():
     gate._stop()
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
+    test_q.cleanup()
+    del test_q
 
 
-def test_open_timeout():
+def test_open_timeout(tmp_path):
     """ Test to ensure the safety timer works correctly
     """
     # Alter safety timer to make test faster
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
-    test_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pip')
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -55,15 +60,18 @@ def test_open_timeout():
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
     assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.01)
+    test_q.cleanup()
+    del test_q
 
 
-def test_close_timeout():
+def test_close_timeout(tmp_path):
     """ Test to ensure the safety timer works correctly
     """
     # Alter safety timer to make test faster
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
-    test_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pip')
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -74,12 +82,15 @@ def test_close_timeout():
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
     assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.01)
+    test_q.cleanup()
+    del test_q
 
 
-def test_open_shunt():
+def test_open_shunt(tmp_path):
     """ Test to ensure the gate stops if it hits something
     """
-    test_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pip')
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -93,12 +104,15 @@ def test_open_shunt():
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
     assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    test_q.cleanup()
+    del test_q
 
 
-def test_close_shunt():
+def test_close_shunt(tmp_path):
     """ Test to ensure the gate stops if it hits something
     """
-    test_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pip')
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -112,3 +126,5 @@ def test_close_shunt():
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
     assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    test_q.cleanup()
+    del test_q

@@ -37,7 +37,7 @@ def test_button_callback():
     factory = MockFactory()
     Device.pin_factory = factory
     factory.reset()
-    job_q = JobQueue(config.VALID_COMMANDS, '/tmp/test_pipe')
+    job_q = JobQueue(config.VALID_COMMANDS, 'test_button_pipe')
     main.setup_button_pins(job_q)
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
@@ -46,11 +46,12 @@ def test_button_callback():
         # Press button
         pin_obj.drive_low()
         assert pin_obj.state == 0
-        time.sleep(0.1)
+        time.sleep(0.2)
         pin_obj.drive_high()
         assert pin_obj.state == 1
         # Check job queue has job
         assert job_q.get_nonblocking() == 'open'
+    job_q.cleanup()
 
 
 @pytest.mark.skip(reason="Not sure best way to test this yet")
