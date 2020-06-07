@@ -41,10 +41,10 @@ def button_callback(button):
     job_q.validate_and_put('open')
 
 
-def setup():
-    """Setup to be run once at start of program
+def setup_button_pins():
+    """Setup for button pins
     """
-    logger.debug('Running setup()')
+    logger.debug('Running button setup')
 
     # Initialize input pins
     outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
@@ -55,10 +55,6 @@ def setup():
     outside_button.when_pressed = button_callback
     inside_button.when_pressed = button_callback
     box_button.when_pressed = button_callback
-
-    # Setup Analog controller
-    AnalogInput.setup()
-
 
 def main_loop():
     """Main loop
@@ -80,7 +76,8 @@ def main_loop():
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    setup()
+    setup_button_pins()
+    AnalogInput.setup()
     job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
     gate = Gate(job_q)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)

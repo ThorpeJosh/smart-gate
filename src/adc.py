@@ -74,7 +74,8 @@ class AnalogInput:
             cls.setup_lock will be true if this setup method has been called already.
         """
         if cls.setup_lock:
-            raise ValueError('AnalogInput.setup() has already been called')
+            logger.critical('Analog.setup() has already been called, please do not call it twice')
+            return
 
         if cls.mock:
             logger.info('Setup run on mock analog interface')
