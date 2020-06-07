@@ -25,8 +25,11 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(stream_handler)
 
-def button_callback(button):
+
+def button_callback(button, queue):
     """Callback for when a button is pushed
+    button - The button object that triggered the callback
+    queue - The queue that a button trigger should put a job on
     """
     pin = button.pin.number
     if pin == config.BUTTON_OUTSIDE_PIN:
@@ -38,11 +41,12 @@ def button_callback(button):
     else:
         logger.warning('Unknown button pressed')
 
-    job_q.validate_and_put('open')
+    queue.validate_and_put('open')
 
 
-def setup_button_pins():
+def setup_button_pins(queue):
     """Setup for button pins
+    queue - The queue that a button trigger should put a job on
     """
     logger.debug('Running button setup')
 
@@ -52,9 +56,10 @@ def setup_button_pins():
     box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
 
     # Button callbacks
-    outside_button.when_pressed = button_callback
-    inside_button.when_pressed = button_callback
-    box_button.when_pressed = button_callback
+    outside_button.when_pressed = lambda: button_callback(outside_button, queue)
+    inside_button.when_pressed = lambda: button_callback(inside_button, queue)
+    box_button.when_pressed = lambda: button_callback(box_button, queue)
+
 
 def main_loop():
     """Main loop
@@ -76,9 +81,9 @@ def main_loop():
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    setup_button_pins()
-    AnalogInput.setup()
     job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
+    setup_button_pins(job_q)
+    AnalogInput.setup()
     gate = Gate(job_q)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
