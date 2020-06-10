@@ -73,7 +73,6 @@ pytest
 * Modes (normal_home, normal_away, lock_open, lock_close). Home and away modes are same for now
 
 ### Phase 2
-* Email alerts
 * Away mode
 * Capture picture
 
