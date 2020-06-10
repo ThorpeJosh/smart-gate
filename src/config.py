@@ -3,6 +3,7 @@
 import os
 import json
 from pathlib import Path
+from jsonschema import validate
 
 # Board Pin numbers
 MOTORPIN0 = 23
@@ -53,3 +54,25 @@ TOADDRS = json_data["toaddrs"]
 SUBJECT = json_data["subject"]
 USER_ID = json_data["credentials"]["id"]
 USER_KEY = json_data["credentials"]["key"]
+
+JSON_SCHEMA = {
+    "type" : "object",
+    "properties" : {
+        "smtp" : {"type" : "string"},
+        "port" : {"type" : "number"},
+        "fromaddr" : {"type" : "string"},
+        "toaddrs" : {
+            "type" : "array",
+            "minItems" : 1,
+            },
+        "subject" : {"type" : "string"},
+        "credentials" : {
+            "type" : "object",
+            "properties" : {
+                "id" : {"type" : "string"},
+                "key" : {"type" : "string"}
+            }
+        }
+    }
+}
+validate(instance=json_data, schema=JSON_SCHEMA)

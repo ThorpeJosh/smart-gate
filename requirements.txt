@@ -4,3 +4,4 @@ pytest
 pathlib
 schedule
 gpiozero
+jsonschema
