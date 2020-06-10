@@ -2,8 +2,11 @@
 """
 import os
 import json
+import logging
 from pathlib import Path
 from jsonschema import validate
+
+logger = logging.getLogger('root')
 
 # Board Pin numbers
 MOTORPIN0 = 23
@@ -44,35 +47,45 @@ FIFO_FILE = os.path.join(str(Path.home()), 'pipe')
 SAVED_MODE_FILE = os.path.join(str(Path.home()), 'saved_mode.txt')
 
 # Load email config json
-EMAIL_KEY_JSON = os.path.join(str(Path.home()), '.email_keys.json')
-with open(EMAIL_KEY_JSON, 'r') as json_file:
-    json_data = json.load(json_file)
-SMTP = json_data["smtp"]
-PORT = json_data["port"]
-FROMADDR = json_data["fromaddr"]
-TOADDRS = json_data["toaddrs"]
-SUBJECT = json_data["subject"]
-USER_ID = json_data["credentials"]["id"]
-USER_KEY = json_data["credentials"]["key"]
+try:
+    EMAIL_KEY_JSON = os.path.join(str(Path.home()), '.email_keys.json')
+    with open(EMAIL_KEY_JSON, 'r') as json_file:
+        json_data = json.load(json_file)
+    SMTP = json_data["smtp"]
+    PORT = json_data["port"]
+    FROMADDR = json_data["fromaddr"]
+    TOADDRS = json_data["toaddrs"]
+    SUBJECT = json_data["subject"]
+    USER_ID = json_data["credentials"]["id"]
+    USER_KEY = json_data["credentials"]["key"]
 
-JSON_SCHEMA = {
-    "type" : "object",
-    "properties" : {
-        "smtp" : {"type" : "string"},
-        "port" : {"type" : "number"},
-        "fromaddr" : {"type" : "string"},
-        "toaddrs" : {
-            "type" : "array",
-            "minItems" : 1,
-            },
-        "subject" : {"type" : "string"},
-        "credentials" : {
-            "type" : "object",
-            "properties" : {
-                "id" : {"type" : "string"},
-                "key" : {"type" : "string"}
+    JSON_SCHEMA = {
+        "type" : "object",
+        "properties" : {
+            "smtp" : {"type" : "string"},
+            "port" : {"type" : "number"},
+            "fromaddr" : {"type" : "string"},
+            "toaddrs" : {
+                "type" : "array",
+                "minItems" : 1,
+                },
+            "subject" : {"type" : "string"},
+            "credentials" : {
+                "type" : "object",
+                "properties" : {
+                    "id" : {"type" : "string"},
+                    "key" : {"type" : "string"}
+                }
             }
         }
     }
-}
-validate(instance=json_data, schema=JSON_SCHEMA)
+    validate(instance=json_data, schema=JSON_SCHEMA)
+except FileNotFoundError as err:
+    logger.warning("No email config json found")
+    SMTP = None
+    PORT = None
+    FROMADDR = None
+    TOADDRS = None
+    SUBJECT = None
+    USER_ID = None
+    USER_KEY = None
