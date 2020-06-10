@@ -1,6 +1,7 @@
 """Module to store all configurable values and variables.
 """
 import os
+import json
 from pathlib import Path
 
 # Board Pin numbers
@@ -40,3 +41,15 @@ FIFO_FILE = os.path.join(str(Path.home()), 'pipe')
 
 # Store gate mode incase of restart
 SAVED_MODE_FILE = os.path.join(str(Path.home()), 'saved_mode.txt')
+
+# Load email config json
+EMAIL_KEY_JSON = os.path.join(str(Path.home()), '.email_keys.json')
+with open(EMAIL_KEY_JSON, 'r') as json_file:
+    json_data = json.load(json_file)
+SMTP = json_data["smtp"]
+PORT = json_data["port"]
+FROMADDR = json_data["fromaddr"]
+TOADDRS = json_data["toaddrs"]
+SUBJECT = json_data["subject"]
+USER_ID = json_data["credentials"]["id"]
+USER_KEY = json_data["credentials"]["key"]
