@@ -1,6 +1,7 @@
 """Smart gate module entry point
 """
 import logging
+import logging.handlers
 import gpiozero
 # Smart gate module imports
 import config
@@ -15,15 +16,27 @@ logger = logging.getLogger('root')
 logger.setLevel(logging.DEBUG)
 
 # Log to file
-handler = logging.FileHandler(config.GATE_LOG)
-handler.setLevel(logging.DEBUG)
-handler.setFormatter(logging.Formatter(LOG_FORMAT))
-logger.addHandler(handler)
+file_handler = logging.FileHandler(config.GATE_LOG)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+logger.addHandler(file_handler)
 
 # Log to stdout as well
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+stream_handler.setLevel(logging.DEBUG)
 logger.addHandler(stream_handler)
+
+# Log to email
+email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT),
+                                             fromaddr=config.FROMADDR,
+                                             toaddrs=config.TOADDRS,
+                                             subject=config.SUBJECT,
+                                             credentials=(config.USER_ID, config.USER_KEY),
+                                             secure=())
+email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+email_handler.setLevel(logging.ERROR)
+logger.addHandler(email_handler)
 
 
 def button_callback(button, queue):
