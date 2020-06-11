@@ -31,8 +31,8 @@ BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.8 # 10k 1k voltage divider
 # Commands that the gate needs to be able to handle on the job queue
 VALID_COMMANDS = ['open', 'close', 'openp', 'closep', 'resume']
 
-# Valid modes for gate operation (normal mode is default incase case of error when on start up)
-VALID_MODE = ['normal', 'lock_closed', 'lock_open']
+# Valid modes for gate operation (First mode is default incase case of error on start up)
+MODES = ['normal_home', 'normal_away', 'lock_closed', 'lock_open']
 
 # Battery Log
 BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), 'battery_voltage.log')
