@@ -75,11 +75,12 @@ def setup_button_pins(queue):
 
 
 def main_loop():
-    """Main loop
-    Similair to the MainLoop() on an arduino, this will loop through indefinately,
-    calling all required inputs and outputs to make the gate function
+    """Loop for the normal operation mode
     """
     job = job_q.get()
+    if job in config.MODES:
+        gate.mode_change(job)
+        return
     if job == 'open':
         gate.current_state = 'opening'
         with job_q.mutex:
@@ -90,6 +91,30 @@ def main_loop():
         gate.hold()
     if gate.current_state == 'holding':
         gate.close()
+
+
+def lock_closed_loop():
+    """Loop for when in the lock closed mode
+    """
+    # Close the gate
+    gate.close()
+    # wait for the mode to change
+    while gate.current_mode == 'lock_open':
+        job = job_q.get()
+        if job in config.MODES:
+            gate.mode_change(job)
+
+
+def lock_open_loop():
+    """Loop for when in the lock open mode
+    """
+    # Open the gate
+    gate.open()
+    # wait for the mode to change
+    while gate.current_mode == 'lock_closed':
+        job = job_q.get()
+        if job in config.MODES:
+            gate.mode_change(job)
 
 
 if __name__ == '__main__':
@@ -103,6 +128,13 @@ if __name__ == '__main__':
     battery_logger.start()
     try:
         while 1:
-            main_loop()
+            if gate.current_mode.startswith('normal'):
+                main_loop()
+            elif gate.current_mode == 'lock_closed':
+                lock_closed_loop()
+            elif gate.current_mode == 'lock_open':
+                lock_open_loop()
+            else:
+                logger.critical("Unexpected mode: %s", gate.current_mode)
     finally:
         job_q.cleanup()
