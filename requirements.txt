@@ -1,7 +1,6 @@
-RPi.GPIO
-Mock.GPIO
 adafruit-circuitpython-ads1x15
 pylint
 pytest
 pathlib
 schedule
+gpiozero

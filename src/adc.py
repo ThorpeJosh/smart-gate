@@ -31,8 +31,8 @@ class AnalogInput:
             raise ValueError('AnalogInput.setup() has not been called')
 
         if self.mock:
-            self.mock_value = None
-            self.mock_voltage = None
+            self.mock_value = 0
+            self.mock_voltage = 0
             return
 
         if pin2 is None:
@@ -74,21 +74,24 @@ class AnalogInput:
             cls.setup_lock will be true if this setup method has been called already.
         """
         if cls.setup_lock:
-            raise ValueError('AnalogInput.setup() has already been called')
+            logger.critical('Analog.setup() has already been called, please do not call it twice')
+            return
 
         if cls.mock:
-            print('mock adc setup')
+            logger.info('Setup run on mock analog interface')
             cls.setup_lock = True
             return
 
         # Create the I2C bus
         try:
             i2c = busio.I2C(board.SCL, board.SDA)
-        except ValueError:
-            print("I2C could not be initiated. Run raspi-config and ensure I2C is enabled")
+            # Create the ADC object using the I2C bus
+            cls.ads = ADS.ADS1015(i2c)
+        except ValueError as err:
+            logger.critical("I2C could not be initiated, reverting to Mock Interface. \
+Run raspi-config and ensure I2C is enabled or ensure I2C device is connected correctly: %s", err)
+            cls.mock = True
 
-        # Create the ADC object using the I2C bus
-        cls.ads = ADS.ADS1015(i2c)
         cls.setup_lock = True
 
     def debug(self):

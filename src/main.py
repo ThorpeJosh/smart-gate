@@ -1,16 +1,7 @@
 """Smart gate module entry point
 """
-import os
 import logging
-import statistics
-try:
-    # RPi.GPIO raises a RuntimeError when imported on non-RPi devices
-    import RPi.GPIO as GPIO
-except RuntimeError:
-    # Import mock interface for non-RPi devices and set the Mock.GPIO log level to debug
-    os.environ['LOG_LEVEL'] = 'Debug'
-    import Mock.GPIO as GPIO
-
+import gpiozero
 # Smart gate module imports
 import config
 from gate import Gate
@@ -34,17 +25,13 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(stream_handler)
 
-def button_callback(pin):
+
+def button_callback(button, queue):
     """Callback for when a button is pushed
+    button - The button object that triggered the callback
+    queue - The queue that a button trigger should put a job on
     """
-    readings = []
-    for _ in range(100):
-        readings.append(GPIO.input(pin))
-
-    # Double check trigger was real button push and not an anomoly
-    if round(statistics.mean(readings)):
-        return
-
+    pin = button.pin.number
     if pin == config.BUTTON_OUTSIDE_PIN:
         logger.info('Outside button pressed')
     elif pin == config.BUTTON_INSIDE_PIN:
@@ -54,33 +41,25 @@ def button_callback(pin):
     else:
         logger.warning('Unknown button pressed')
 
-    job_q.validate_and_put('open')
+    queue.validate_and_put('open')
 
 
-def setup():
-    """Setup to be run once at start of program
+def setup_button_pins(queue):
+    """Setup for button pins
+    queue - The queue that a button trigger should put a job on
     """
-    logger.debug('Running setup()')
+    logger.debug('Running button setup')
 
-    # Initialize all digital pins
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(config.BUTTON_OUTSIDE_PIN, GPIO.IN)
-    GPIO.setup(config.BUTTON_INSIDE_PIN, GPIO.IN)
-    GPIO.setup(config.BUTTON_BOX_PIN, GPIO.IN)
-
-    GPIO.setup(config.MOTORPIN0, GPIO.OUT, initial=1)
-    GPIO.setup(config.MOTORPIN1, GPIO.OUT, initial=1)
+    # Initialize input pins
+    outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
+    inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
+    box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
 
     # Button callbacks
-    GPIO.add_event_detect(config.BUTTON_OUTSIDE_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_INSIDE_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
-    GPIO.add_event_detect(config.BUTTON_BOX_PIN, GPIO.FALLING, callback=button_callback,
-                          bouncetime=1000)
+    outside_button.when_pressed = lambda: button_callback(outside_button, queue)
+    inside_button.when_pressed = lambda: button_callback(inside_button, queue)
+    box_button.when_pressed = lambda: button_callback(box_button, queue)
 
-    # Setup Analog controller
-    AnalogInput.setup()
 
 def main_loop():
     """Main loop
@@ -100,11 +79,11 @@ def main_loop():
         gate.close()
 
 
-
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    setup()
     job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
+    setup_button_pins(job_q)
+    AnalogInput.setup()
     gate = Gate(job_q)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
@@ -113,5 +92,4 @@ if __name__ == '__main__':
         while 1:
             main_loop()
     finally:
-        GPIO.cleanup()
         job_q.cleanup()
