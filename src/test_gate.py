@@ -24,7 +24,7 @@ def test_motor_pins(tmp_path):
     """
     #pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue(config.COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
@@ -49,7 +49,7 @@ def test_open_timeout(tmp_path):
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -71,7 +71,7 @@ def test_close_timeout(tmp_path):
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -87,10 +87,10 @@ def test_close_timeout(tmp_path):
 
 
 def test_open_shunt(tmp_path):
-    """ Test to ensure the gate stops if it hits something
+    """ Test to ensure the gate stops if it hits something on opening
     """
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -109,10 +109,10 @@ def test_open_shunt(tmp_path):
 
 
 def test_close_shunt(tmp_path):
-    """ Test to ensure the gate stops if it hits something
+    """ Test to ensure the gate stops if it hits something on closing
     """
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 

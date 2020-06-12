@@ -94,7 +94,7 @@ def main_loop():
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    job_q = JobQueue(config.VALID_COMMANDS, config.FIFO_FILE)
+    job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     setup_button_pins(job_q)
     AnalogInput.setup()
     gate = Gate(job_q)

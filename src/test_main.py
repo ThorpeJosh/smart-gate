@@ -37,7 +37,7 @@ def test_button_callback():
     factory = MockFactory()
     Device.pin_factory = factory
     factory.reset()
-    job_q = JobQueue(config.VALID_COMMANDS, 'test_button_pipe')
+    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
     main.setup_button_pins(job_q)
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
