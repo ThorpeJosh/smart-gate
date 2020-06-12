@@ -93,28 +93,29 @@ def main_loop():
         gate.close()
 
 
-def lock_closed_loop():
+def lock_closed_loop(_gate, queue):
     """Loop for when in the lock closed mode
     """
     # Close the gate
-    gate.close()
+    _gate.close()
     # wait for the mode to change
-    while gate.current_mode == 'lock_open':
-        job = job_q.get()
+    while _gate.current_mode == 'lock_closed':
+        job = queue.get()
         if job in config.MODES:
-            gate.mode_change(job)
+            _gate.mode_change(job)
 
 
-def lock_open_loop():
+def lock_open_loop(_gate, queue):
     """Loop for when in the lock open mode
     """
     # Open the gate
-    gate.open()
+    _gate.open()
     # wait for the mode to change
-    while gate.current_mode == 'lock_closed':
-        job = job_q.get()
+    while _gate.current_mode == 'lock_open':
+        job = queue.get()
+        print(job)
         if job in config.MODES:
-            gate.mode_change(job)
+            _gate.mode_change(job)
 
 
 if __name__ == '__main__':
@@ -131,9 +132,9 @@ if __name__ == '__main__':
             if gate.current_mode.startswith('normal'):
                 main_loop()
             elif gate.current_mode == 'lock_closed':
-                lock_closed_loop()
+                lock_closed_loop(gate, job_q)
             elif gate.current_mode == 'lock_open':
-                lock_open_loop()
+                lock_open_loop(gate, job_q)
             else:
                 logger.critical("Unexpected mode: %s", gate.current_mode)
     finally:
