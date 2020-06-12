@@ -75,6 +75,7 @@ pytest
 ### Phase 2
 * Away mode
 * Capture picture
+* Remove all busy waiting (Optimize to reduce cpu usage by removing while loops with delays)
 
 ### Phase 3
 * Number Plate detection
