@@ -35,29 +35,38 @@ email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT)
                                              credentials=(config.USER_ID, config.USER_KEY),
                                              secure=())
 email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-email_handler.setLevel(logging.ERROR)
+email_handler.setLevel(logging.WARNING)
 logger.addHandler(email_handler)
 
 
-def button_callback(button, queue):
+def button_callback(button, queue, _gate):
     """Callback for when a button is pushed
     button - The button object that triggered the callback
     queue - The queue that a button trigger should put a job on
     """
     pin = button.pin.number
     if pin == config.BUTTON_OUTSIDE_PIN:
-        logger.info('Outside button pressed')
+        if _gate.current_mode.endswith('away'):
+            logger.warning('Outside button pressed')
+        else:
+            logger.info('Outside button pressed')
     elif pin == config.BUTTON_INSIDE_PIN:
-        logger.info('Inside button pressed')
+        if _gate.current_mode.endswith('away'):
+            logger.warning('Inside button pressed')
+        else:
+            logger.info('Inside button pressed')
     elif pin == config.BUTTON_BOX_PIN:
-        logger.info('Box button pressed')
+        if _gate.current_mode.endswith('away'):
+            logger.warning('Box button pressed')
+        else:
+            logger.info('Box button pressed')
     else:
         logger.warning('Unknown button pressed')
 
     queue.validate_and_put('open')
 
 
-def setup_button_pins(queue):
+def setup_button_pins(queue, _gate):
     """Setup for button pins
     queue - The queue that a button trigger should put a job on
     """
@@ -69,9 +78,9 @@ def setup_button_pins(queue):
     box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
 
     # Button callbacks
-    outside_button.when_pressed = lambda: button_callback(outside_button, queue)
-    inside_button.when_pressed = lambda: button_callback(inside_button, queue)
-    box_button.when_pressed = lambda: button_callback(box_button, queue)
+    outside_button.when_pressed = lambda: button_callback(outside_button, queue, _gate)
+    inside_button.when_pressed = lambda: button_callback(inside_button, queue, _gate)
+    box_button.when_pressed = lambda: button_callback(box_button, queue, _gate)
 
 
 def main_loop():
@@ -121,9 +130,9 @@ def lock_open_loop(_gate, queue):
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
-    setup_button_pins(job_q)
     AnalogInput.setup()
     gate = Gate(job_q)
+    setup_button_pins(job_q, gate)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
     battery_logger.start()
@@ -137,5 +146,8 @@ if __name__ == '__main__':
                 lock_open_loop(gate, job_q)
             else:
                 logger.critical("Unexpected mode: %s", gate.current_mode)
+    # Catch and log any unexpected exception before program exits
+    except Exception as exception: # pylint: disable=broad-except
+        logger.critical('Critical Exception: %s', exception)
     finally:
         job_q.cleanup()

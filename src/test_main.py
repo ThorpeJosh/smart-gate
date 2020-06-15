@@ -12,6 +12,7 @@ from job_queue import JobQueue
 from gate import Gate
 from adc import AnalogInput
 
+
 def delayed_put(delay, message, queue):
     """ Function to be threaded that puts a message on a queue after a delay
     Keyword arguments:
@@ -30,7 +31,7 @@ def test_setup_button_pins():
     factory = MockFactory()
     Device.pin_factory = factory
     factory.reset()
-    main.setup_button_pins(None)
+    main.setup_button_pins(None, None)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
@@ -54,7 +55,9 @@ def test_button_callback():
     Device.pin_factory = factory
     factory.reset()
     job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    main.setup_button_pins(job_q)
+    AnalogInput.setup()
+    gate = Gate(job_q)
+    main.setup_button_pins(job_q, gate)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
@@ -68,7 +71,50 @@ def test_button_callback():
         assert pin_obj.state == 1
         # Check job queue has job
         assert job_q.get_nonblocking() == 'open'
+
     job_q.cleanup()
+    del job_q
+
+
+def test_email_in_button_callback(caplog):
+    """ Test that the log level is raised enough to send emails if gate is in away mode
+    """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
+    AnalogInput.setup()
+    gate = Gate(job_q)
+    main.setup_button_pins(job_q, gate)
+
+    # Ensure no emails will be sent
+    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
+        pin_obj = Device.pin_factory.pin(pin)
+        caplog.clear()
+        # Press button
+        pin_obj.drive_low()
+        time.sleep(0.2)
+        pin_obj.drive_high()
+        # Check log message level
+        for record in caplog.records:
+            assert record.levelno < main.email_handler.level
+
+    # Ensure emails will be sent
+    gate.current_mode = 'normal_away'
+    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
+        pin_obj = Device.pin_factory.pin(pin)
+        caplog.clear()
+        # Press button
+        pin_obj.drive_low()
+        time.sleep(0.2)
+        pin_obj.drive_high()
+        # Check log message level
+        for record in caplog.records:
+            assert record.levelno >= main.email_handler.level
+
+    job_q.cleanup()
+    del job_q
 
 
 @pytest.mark.skip(reason="Not sure best way to test this yet")
