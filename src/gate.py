@@ -7,11 +7,7 @@ import gpiozero
 import config
 from adc import AnalogInput
 
-
-# Create root logger
-LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
-logging.basicConfig(filename=config.GATE_LOG, level=logging.DEBUG, format=LOG_FORMAT)
-logger = logging.getLogger()
+logger = logging.getLogger('root')
 
 class Gate():
     """Gate instance
@@ -42,7 +38,7 @@ class Gate():
                 mode = mode.strip().replace('\n', '')
                 if mode not in config.VALID_MODE:
                     mode = config.VALID_MODE[0]
-                    logger.warning("Invalid read_mode attempted: %s", mode)
+                    logger.warning("Invalid read_mode value: %s", mode)
         except FileNotFoundError:
             mode = config.VALID_MODE[0]
             logger.warning('Saved mode file not found')
@@ -54,6 +50,7 @@ class Gate():
         if new_mode in config.VALID_MODE:
             self.current_mode = new_mode
             self._write_mode(new_mode)
+            logger.info('Changed gate mode to: %s', self.current_mode)
         else:
             logger.warning("Invalid mode_change attempted: %s", new_mode)
 
