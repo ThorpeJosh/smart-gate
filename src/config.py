@@ -23,7 +23,7 @@ BATTERY_VOLTAGE_PIN = 3
 # Parameters (time in seconds unless stated otherwise)
 SHUNT_THRESHOLD = 0.04 #Volts. Shunt is 0.01R
 SHUNT_READ_DELAY = 0.5
-MAX_TIME_TO_OPEN_CLOSE = 25
+MAX_TIME_TO_OPEN_CLOSE = 30
 HOLD_OPEN_TIME = 10
 
 BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.8 # 10k 1k voltage divider
