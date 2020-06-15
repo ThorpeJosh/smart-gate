@@ -24,7 +24,7 @@ def test_motor_pins(tmp_path):
     """
     #pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue(config.COMMANDS, fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
@@ -49,7 +49,7 @@ def test_open_timeout(tmp_path):
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -71,7 +71,7 @@ def test_close_timeout(tmp_path):
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -87,10 +87,10 @@ def test_close_timeout(tmp_path):
 
 
 def test_open_shunt(tmp_path):
-    """ Test to ensure the gate stops if it hits something
+    """ Test to ensure the gate stops if it hits something on opening
     """
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -109,10 +109,10 @@ def test_open_shunt(tmp_path):
 
 
 def test_close_shunt(tmp_path):
-    """ Test to ensure the gate stops if it hits something
+    """ Test to ensure the gate stops if it hits something on closing
     """
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.VALID_COMMANDS, fifo_file)
+    test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
     gate = Gate(test_q)
 
@@ -126,5 +126,48 @@ def test_close_shunt(tmp_path):
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
     assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    test_q.cleanup()
+    del test_q
+
+
+def test_mode_changing(tmp_path):
+    """ Test the mode change feature to ensure it:
+    - Defaults to the normal mode if no save file is found
+    - Can change modes successfully and save new mode to file
+    - Resumes a saved mode upon restart
+    """
+    save_mode_file = os.path.join(str(tmp_path), 'mode.txt')
+    # Point gate to the dummy file
+    config.SAVED_MODE_FILE = save_mode_file
+    # Setup gate
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue([], fifo_file)
+    AnalogInput.setup()
+
+    # Ensure when no saved mode exists, it defaults to normal-home mode
+    gate = Gate(test_q)
+    assert gate.current_mode == 'normal_home'
+
+    # Ensure that an incorrect mode is ignored
+    for invalid_mode in ['invalid_mode', 12, -1, 4+2j, 0.234]:
+        gate.mode_change(invalid_mode)
+        assert gate.current_mode == 'normal_home'
+
+    # Ensure that the mode changes and saves successfully
+    for valid_mode in config.MODES:
+        gate.mode_change(valid_mode)
+        assert gate.current_mode == valid_mode
+        with open(save_mode_file, 'r') as saved_mode:
+            mode = saved_mode.read()
+            mode = mode.strip().replace('\n', '')
+            assert mode == valid_mode
+
+    # Ensure that the mode is recovered upon restart
+    gate.mode_change('lock_open')
+    del gate
+    gate = Gate(test_q)
+    assert gate.current_mode == 'lock_open'
+
+    # Cleanup
     test_q.cleanup()
     del test_q

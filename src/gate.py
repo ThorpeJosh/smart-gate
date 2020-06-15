@@ -36,18 +36,19 @@ class Gate():
             with open(config.SAVED_MODE_FILE, 'r') as saved_mode:
                 mode = saved_mode.read()
                 mode = mode.strip().replace('\n', '')
-                if mode not in config.VALID_MODE:
-                    mode = config.VALID_MODE[0]
+                if mode not in config.MODES:
                     logger.warning("Invalid read_mode value: %s", mode)
+                    mode = config.MODES[0]
+                    logger.warning("Setting mode to the default: %s", mode)
         except FileNotFoundError:
-            mode = config.VALID_MODE[0]
+            mode = config.MODES[0]
             logger.warning('Saved mode file not found')
         return mode
 
     def mode_change(self, new_mode):
         """allow user to change gates current operating mode
         """
-        if new_mode in config.VALID_MODE:
+        if new_mode in config.MODES:
             self.current_mode = new_mode
             self._write_mode(new_mode)
             logger.info('Changed gate mode to: %s', self.current_mode)

@@ -70,10 +70,8 @@ pytest
 ### Phase 1
 * Collision detection on closing (Immediately reopen)
 * Bug - Open command from pipe doesn't work when gate is closing
-* Modes (normal_home, normal_away, lock_open, lock_close). Home and away modes are same for now
 
 ### Phase 2
-* Away mode
 * Capture picture
 * Remove all busy waiting (Optimize to reduce cpu usage by removing while loops with delays)
 
