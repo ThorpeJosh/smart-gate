@@ -1,5 +1,7 @@
 # Raspberry pi powered smart gate
-This repo is for a private application of a IOT inspired raspberry pi controller for a household front gate
+[![Build Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart_gate%2Fmaster&subject=build%20status)](http://jenkins.thorpe.engineering:8080/job/smart_gate/job/master/) 
+[![Deployment Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart-gate-deploy&subject=deployment%20status)](http://jenkins.thorpe.engineering:8080/job/smart-gate-deploy/)  
+This repo is for a private application of a IOT inspired raspberry pi controller for a household front gate.  
 The gate has 3 input buttons to operate it, a 24V motor, a 24V battery with solar charging, and wifi for internet connectivity.
 
 ## GPIO inputs
