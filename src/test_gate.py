@@ -13,15 +13,15 @@ from adc import AnalogInput
 
 logger = logging.getLogger(__name__)
 
-# Setup mock pins
-factory = MockFactory()
-Device.pin_factory = factory
-factory.reset()
-
 
 def test_motor_pins(tmp_path):
     """ Testing open method
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     #pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
@@ -45,6 +45,11 @@ def test_motor_pins(tmp_path):
 def test_open_timeout(tmp_path):
     """ Test to ensure the safety timer works correctly
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     # Alter safety timer to make test faster
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
@@ -59,7 +64,7 @@ def test_open_timeout(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
-    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.01)
+    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.1)
     test_q.cleanup()
     del test_q
 
@@ -67,6 +72,11 @@ def test_open_timeout(tmp_path):
 def test_close_timeout(tmp_path):
     """ Test to ensure the safety timer works correctly
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     # Alter safety timer to make test faster
     config.MAX_TIME_TO_OPEN_CLOSE = 1
 
@@ -89,6 +99,11 @@ def test_close_timeout(tmp_path):
 def test_open_shunt(tmp_path):
     """ Test to ensure the gate stops if it hits something on opening
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
@@ -111,6 +126,11 @@ def test_open_shunt(tmp_path):
 def test_close_shunt(tmp_path):
     """ Test to ensure the gate stops if it hits something on closing
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
     AnalogInput.setup()
@@ -136,6 +156,11 @@ def test_mode_changing(tmp_path):
     - Can change modes successfully and save new mode to file
     - Resumes a saved mode upon restart
     """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
     save_mode_file = os.path.join(str(tmp_path), 'mode.txt')
     # Point gate to the dummy file
     config.SAVED_MODE_FILE = save_mode_file
@@ -165,9 +190,68 @@ def test_mode_changing(tmp_path):
     # Ensure that the mode is recovered upon restart
     gate.mode_change('lock_open')
     del gate
+    factory.reset()
     gate = Gate(test_q)
     assert gate.current_mode == 'lock_open'
 
     # Cleanup
     test_q.cleanup()
     del test_q
+
+
+def test_setup_button_pins(tmp_path):
+    """ Test that the button pins are setup correctly
+    """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
+    AnalogInput.setup()
+    _ = Gate(job_q)
+
+    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
+        pin_obj = Device.pin_factory.pin(pin)
+        # Check pin is infact an input pin
+        assert pin_obj.function == 'input'
+        # Check pin number is correct
+        assert pin_obj.number == pin
+        # Check pull up resistor is enabled
+        assert pin_obj.pull == 'up'
+        # Check debounce is enabled
+        assert pin_obj.bounce == 0.1
+        # Check that the pin value is high due to pull up resistor
+        assert pin_obj.state == 1
+
+    #Cleanup
+    job_q.cleanup()
+
+
+def test_button_callback():
+    """Test that when the button is pushed that the callback puts a job on the queue
+    """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
+    AnalogInput.setup()
+    _ = Gate(job_q)
+
+    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
+        pin_obj = Device.pin_factory.pin(pin)
+        # Check job queue is empty
+        assert job_q.get_nonblocking() is None
+        # Press button
+        pin_obj.drive_low()
+        assert pin_obj.state == 0
+        time.sleep(0.2)
+        pin_obj.drive_high()
+        assert pin_obj.state == 1
+        # Check job queue has job
+        assert job_q.get_nonblocking() == 'open'
+
+    #Cleanup
+    job_q.cleanup()
+    del job_q

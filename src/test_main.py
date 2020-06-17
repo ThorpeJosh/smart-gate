@@ -24,58 +24,6 @@ def delayed_put(delay, message, queue):
     queue.validate_and_put(message)
 
 
-def test_setup_button_pins():
-    """ Test that the button pins are setup correctly
-    """
-    # Setup mock pins
-    factory = MockFactory()
-    Device.pin_factory = factory
-    factory.reset()
-    main.setup_button_pins(None, None)
-
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        # Check pin is infact an input pin
-        assert pin_obj.function == 'input'
-        # Check pin number is correct
-        assert pin_obj.number == pin
-        # Check pull up resistor is enabled
-        assert pin_obj.pull == 'up'
-        # Check debounce is enabled
-        assert pin_obj.bounce == 0.1
-        # Check that the pin value is high due to pull up resistor
-        assert pin_obj.state == 1
-
-
-def test_button_callback():
-    """Test that when the button is pushed that the callback puts a job on the queue
-    """
-    # Setup mock pins
-    factory = MockFactory()
-    Device.pin_factory = factory
-    factory.reset()
-    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInput.setup()
-    gate = Gate(job_q)
-    main.setup_button_pins(job_q, gate)
-
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        # Check job queue is empty
-        assert job_q.get_nonblocking() is None
-        # Press button
-        pin_obj.drive_low()
-        assert pin_obj.state == 0
-        time.sleep(0.2)
-        pin_obj.drive_high()
-        assert pin_obj.state == 1
-        # Check job queue has job
-        assert job_q.get_nonblocking() == 'open'
-
-    job_q.cleanup()
-    del job_q
-
-
 def test_email_in_button_callback(caplog):
     """ Test that the log level is raised enough to send emails if gate is in away mode
     """
@@ -83,10 +31,9 @@ def test_email_in_button_callback(caplog):
     factory = MockFactory()
     Device.pin_factory = factory
     factory.reset()
-    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
+    test_queue = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
     AnalogInput.setup()
-    gate = Gate(job_q)
-    main.setup_button_pins(job_q, gate)
+    gate = Gate(test_queue)
 
     # Ensure no emails will be sent
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
@@ -113,8 +60,8 @@ def test_email_in_button_callback(caplog):
         for record in caplog.records:
             assert record.levelno >= main.email_handler.level
 
-    job_q.cleanup()
-    del job_q
+    #Cleanup
+    test_queue.cleanup()
 
 
 @pytest.mark.skip(reason="Not sure best way to test this yet")
@@ -133,28 +80,27 @@ def test_lock_open_loop(tmp_path):
     # Setup gate dependencies
     AnalogInput.setup()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
-    gate = Gate(job_q)
+    test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
+    gate = Gate(test_queue)
 
     # Set gate mode to lock_open
     gate.current_mode = 'lock_open'
 
     # Ensure queue is empty to start
-    assert job_q.get_nonblocking() is None
+    assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
     gate.shunt_pin.mock_voltage = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it
-    threading.Thread(target=lambda: delayed_put(0.2, 'open', job_q)).start()
+    threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
     # put a non lock_open mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_closed', job_q)).start()
-    main.lock_open_loop(gate, job_q)
+    threading.Thread(target=lambda: delayed_put(1, 'lock_closed', test_queue)).start()
+    main.lock_open_loop(gate, test_queue)
     assert time.monotonic()-start_time == pytest.approx(1, 0.02)
 
     #Cleanup
-    job_q.cleanup()
-    del job_q
+    test_queue.cleanup()
 
 
 def test_lock_closed_loop(tmp_path):
@@ -167,25 +113,24 @@ def test_lock_closed_loop(tmp_path):
     # Setup gate dependencies
     AnalogInput.setup()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
-    gate = Gate(job_q)
+    test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
+    gate = Gate(test_queue)
 
     # Set gate mode to lock_open
     gate.current_mode = 'lock_closed'
 
     # Ensure queue is empty to start
-    assert job_q.get_nonblocking() is None
+    assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
     gate.shunt_pin.mock_voltage = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it
-    threading.Thread(target=lambda: delayed_put(0.2, 'open', job_q)).start()
+    threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
     # put a non lock_open mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_open', job_q)).start()
-    main.lock_closed_loop(gate, job_q)
+    threading.Thread(target=lambda: delayed_put(1, 'lock_open', test_queue)).start()
+    main.lock_closed_loop(gate, test_queue)
     assert time.monotonic()-start_time == pytest.approx(1, 0.02)
 
     #Cleanup
-    job_q.cleanup()
-    del job_q
+    test_queue.cleanup()
