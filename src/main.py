@@ -14,8 +14,8 @@ LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
 logger = logging.getLogger('root')
 logger.setLevel(logging.DEBUG)
 
-# Log to file
-file_handler = logging.FileHandler(config.GATE_LOG)
+# Log to file, rotate logs every Monday
+file_handler = logging.handlers.TimedRotatingFileHandler(config.GATE_LOG, when='W0', backupCount=50)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(file_handler)
