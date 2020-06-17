@@ -2,7 +2,6 @@
 """
 import logging
 import logging.handlers
-import gpiozero
 # Smart gate module imports
 import config
 from gate import Gate
@@ -37,50 +36,6 @@ email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT)
 email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 email_handler.setLevel(logging.WARNING)
 logger.addHandler(email_handler)
-
-
-def button_callback(button, queue, _gate):
-    """Callback for when a button is pushed
-    button - The button object that triggered the callback
-    queue - The queue that a button trigger should put a job on
-    """
-    pin = button.pin.number
-    if pin == config.BUTTON_OUTSIDE_PIN:
-        if _gate.current_mode.endswith('away'):
-            logger.warning('Outside button pressed')
-        else:
-            logger.info('Outside button pressed')
-    elif pin == config.BUTTON_INSIDE_PIN:
-        if _gate.current_mode.endswith('away'):
-            logger.warning('Inside button pressed')
-        else:
-            logger.info('Inside button pressed')
-    elif pin == config.BUTTON_BOX_PIN:
-        if _gate.current_mode.endswith('away'):
-            logger.warning('Box button pressed')
-        else:
-            logger.info('Box button pressed')
-    else:
-        logger.warning('Unknown button pressed')
-
-    queue.validate_and_put('open')
-
-
-def setup_button_pins(queue, _gate):
-    """Setup for button pins
-    queue - The queue that a button trigger should put a job on
-    """
-    logger.debug('Running button setup')
-
-    # Initialize input pins
-    outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
-    inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
-    box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
-
-    # Button callbacks
-    outside_button.when_pressed = lambda: button_callback(outside_button, queue, _gate)
-    inside_button.when_pressed = lambda: button_callback(inside_button, queue, _gate)
-    box_button.when_pressed = lambda: button_callback(box_button, queue, _gate)
 
 
 def main_loop():
@@ -132,7 +87,6 @@ if __name__ == '__main__':
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     AnalogInput.setup()
     gate = Gate(job_q)
-    setup_button_pins(job_q, gate)
     battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
     battery_logger.start()
