@@ -17,9 +17,8 @@ class Gate():
         self.current_state = 'unknown'
         self.current_mode = self._read_mode()
         self.shunt_pin = AnalogInput(config.SHUNT_PIN0, config.SHUNT_PIN1)
-        self.motor_pin0 = gpiozero.OutputDevice(config.MOTORPIN0, active_high=False)
-        self.motor_pin1 = gpiozero.OutputDevice(config.MOTORPIN1, active_high=False)
         self.job_q = queue
+        self.setup_pins()
 
     @staticmethod
     def _write_mode(mode):
@@ -142,3 +141,47 @@ class Gate():
         logger.debug('stopping gate motor')
         self.motor_pin0.off()
         self.motor_pin1.off()
+
+    def setup_pins(self):
+        """Setup for gpio pins
+        """
+        logger.debug('Running pin setup')
+
+        # Initialize output pins
+        self.motor_pin0 = gpiozero.OutputDevice(config.MOTORPIN0, active_high=False)
+        self.motor_pin1 = gpiozero.OutputDevice(config.MOTORPIN1, active_high=False)
+
+        # Initialize input pins
+        outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
+        inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
+        box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
+
+        # Button callbacks
+        outside_button.when_pressed = self.button_callback
+        inside_button.when_pressed = self.button_callback
+        box_button.when_pressed = self.button_callback
+
+    def button_callback(self, button):
+        """Callback for when a button is pushed
+        button - The button object that triggered the callback
+        """
+        pin = button.pin.number
+        if pin == config.BUTTON_OUTSIDE_PIN:
+            if self.current_mode.endswith('away'):
+                logger.warning('Outside button pressed')
+            else:
+                logger.info('Outside button pressed')
+        elif pin == config.BUTTON_INSIDE_PIN:
+            if self.current_mode.endswith('away'):
+                logger.warning('Inside button pressed')
+            else:
+                logger.info('Inside button pressed')
+        elif pin == config.BUTTON_BOX_PIN:
+            if self.current_mode.endswith('away'):
+                logger.warning('Box button pressed')
+            else:
+                logger.info('Box button pressed')
+        else:
+            logger.warning('Unknown button pressed')
+
+        self.job_q.validate_and_put('open')
