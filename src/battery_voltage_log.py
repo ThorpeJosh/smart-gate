@@ -19,7 +19,7 @@ class BatteryVoltageLog():
         log_format = '%(levelname)s %(asctime)s : %(message)s'
         self.bat_logger = logging.getLogger(__name__)
         self.bat_logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler(path)
+        file_handler = logging.handlers.TimedRotatingFileHandler(path, when='W0', backupCount=50)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(logging.Formatter(log_format))
         self.bat_logger.addHandler(file_handler)
