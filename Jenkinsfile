@@ -2,8 +2,9 @@ pipeline {
     options {
         timeout(time: 60, unit: 'SECONDS')
         } 
-    agent any
-
+    agent {
+        docker { image 'debian:buster-slim' }
+    }
     stages {
         stage('Build virtualenv') {
             steps {
