@@ -152,14 +152,14 @@ class Gate():
         self.motor_pin1 = gpiozero.OutputDevice(config.MOTORPIN1, active_high=False)
 
         # Initialize input pins
-        outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
-        inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
-        box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
+        self.outside_button = gpiozero.Button(config.BUTTON_OUTSIDE_PIN, pull_up=True, bounce_time=0.1)
+        self.inside_button = gpiozero.Button(config.BUTTON_INSIDE_PIN, pull_up=True, bounce_time=0.1)
+        self.box_button = gpiozero.Button(config.BUTTON_BOX_PIN, pull_up=True, bounce_time=0.1)
 
         # Button callbacks
-        outside_button.when_pressed = self.button_callback
-        inside_button.when_pressed = self.button_callback
-        box_button.when_pressed = self.button_callback
+        self.outside_button.when_pressed = self.button_callback
+        self.inside_button.when_pressed = self.button_callback
+        self.box_button.when_pressed = self.button_callback
 
     def button_callback(self, button):
         """Callback for when a button is pushed
