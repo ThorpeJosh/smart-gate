@@ -1,4 +1,4 @@
-adafruit-circuitpython-ads1x15
+pyserial
 pylint
 pytest
 pathlib
