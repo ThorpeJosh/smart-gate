@@ -9,8 +9,8 @@ float voltages[6];
 
 void setup()
 {
-    // start serial at 9600bps
-    Serial.begin(9600);
+    // start serial at 250000bps
+    Serial.begin(250000);
     serialHandshake();
 }
 
