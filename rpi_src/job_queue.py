@@ -1,12 +1,13 @@
 """Module for the job queue and named pipe (FIFO) system
 """
+import logging
 import os
+import queue
 import subprocess
 import threading
-import queue
-import logging
 
 logger = logging.getLogger('root')
+
 
 class JobQueue(queue.Queue):
     """Queue that holds commands for the gate to execute.

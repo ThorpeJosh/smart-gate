@@ -3,8 +3,9 @@
 import os
 import subprocess
 import time
-from job_queue import JobQueue
+
 import config
+from job_queue import JobQueue
 
 
 def test_queue(tmp_path):

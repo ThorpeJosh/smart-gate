@@ -2,11 +2,12 @@
 """
 import logging
 import logging.handlers
+
 # Smart gate module imports
 import config
-from gate import Gate
-from adc import AnalogInput
+from serial_analog import AnalogInputs
 from battery_voltage_log import BatteryVoltageLog
+from gate import Gate
 from job_queue import JobQueue
 
 # Create root logger
@@ -77,7 +78,6 @@ def lock_open_loop(_gate, queue):
     # wait for the mode to change
     while _gate.current_mode == 'lock_open':
         job = queue.get()
-        print(job)
         if job in config.MODES:
             _gate.mode_change(job)
 
@@ -85,10 +85,9 @@ def lock_open_loop(_gate, queue):
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(job_q)
-    battery_pin = AnalogInput(config.BATTERY_VOLTAGE_PIN)
-    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, battery_pin)
+    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()
     try:
         while 1:
@@ -101,7 +100,7 @@ if __name__ == '__main__':
             else:
                 logger.critical("Unexpected mode: %s", gate.current_mode)
     # Catch and log any unexpected exception before program exits
-    except Exception as exception: # pylint: disable=broad-except
+    except Exception as exception:  # pylint: disable=broad-except
         logger.critical('Critical Exception: %s', exception)
     finally:
         job_q.cleanup()
