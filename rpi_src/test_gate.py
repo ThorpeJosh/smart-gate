@@ -52,7 +52,7 @@ def test_open_timeout(tmp_path):
     factory.reset()
 
     # Alter safety timer to make test faster
-    config.MAX_TIME_TO_OPEN_CLOSE = 1
+    config.MAX_TIME_TO_OPEN_CLOSE = 2
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
@@ -65,7 +65,8 @@ def test_open_timeout(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
-    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.1)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.2)
     test_q.cleanup()
     del test_q
 
@@ -79,7 +80,7 @@ def test_close_timeout(tmp_path):
     factory.reset()
 
     # Alter safety timer to make test faster
-    config.MAX_TIME_TO_OPEN_CLOSE = 1
+    config.MAX_TIME_TO_OPEN_CLOSE = 2
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
@@ -92,7 +93,8 @@ def test_close_timeout(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
-    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.1)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.2)
     test_q.cleanup()
     del test_q
 
@@ -119,7 +121,8 @@ def test_open_shunt(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
-    assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     test_q.cleanup()
     del test_q
 
@@ -146,7 +149,8 @@ def test_close_shunt(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
-    assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     test_q.cleanup()
     del test_q
 

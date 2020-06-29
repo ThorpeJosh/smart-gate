@@ -91,9 +91,10 @@ def test_lock_open_loop(tmp_path):
     # put a non mode message on the queue to ensure it ignores it
     threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
     # put a non lock_open mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_closed', test_queue)).start()
+    threading.Thread(target=lambda: delayed_put(1.5, 'lock_closed', test_queue)).start()
     main.lock_open_loop(gate, test_queue)
-    assert time.monotonic()-start_time == pytest.approx(1, 0.1)
+    time_taken = time.monotonic()-start_time
+    assert time_taken == pytest.approx(1.5, 0.2)
 
     #Cleanup
     test_queue.cleanup()
@@ -124,9 +125,10 @@ def test_lock_closed_loop(tmp_path):
     # put a non mode message on the queue to ensure it ignores it
     threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
     # put a non lock_closed mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_open', test_queue)).start()
+    threading.Thread(target=lambda: delayed_put(1.5, 'lock_open', test_queue)).start()
     main.lock_closed_loop(gate, test_queue)
-    assert time.monotonic()-start_time == pytest.approx(1, 0.1)
+    time_taken = time.monotonic()-start_time
+    assert time_taken == pytest.approx(1.5, 0.2)
 
     #Cleanup
     test_queue.cleanup()

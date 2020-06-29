@@ -1,5 +1,6 @@
 """ Test module to ensure the arduino mock interface is working correctly
 """
+import time
 from serial_analog import AnalogInputs
 
 
@@ -8,6 +9,9 @@ def test_setup_lock(caplog):
     setup() gets run exactly once before any pins are initialized else it should raise an exception
     """
     AnalogInputs.handshake()
+
+    # Sleep to wait for logs from previous tests threads that are still shutting down
+    time.sleep(1)
 
     caplog.clear()
     AnalogInputs.handshake()
