@@ -74,6 +74,7 @@ pytest
 * Bug - Open command from pipe doesn't work when gate is closing
 * Bug - Changing from lock_open to normal mode doesn't close the gate
 * Bug - Messages on pipe are adding newlines to log
+* Update README with Arduino
 
 ### Phase 2
 * Capture picture
