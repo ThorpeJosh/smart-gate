@@ -9,6 +9,8 @@ float voltages[6];
 
 void setup()
 {
+    // Use external analog reference and put a jumper between pins 3.3V and AREF
+    analogReference(EXTERNAL);
     // start serial at 250000bps
     Serial.begin(250000);
     serialHandshake();
@@ -25,7 +27,7 @@ void loop()
         updateAnalogVoltages();
         for(int i=0; i<noOfAnalogPins; i++)
         {
-            Serial.println(voltages[i]);
+            Serial.println(voltages[i], 4);
         }
     }
 }
@@ -52,10 +54,10 @@ void updateAnalogVoltages()
         delay(1);
     }
 
-    // Divide by number of samples to get the mean, then multiply by 5/1023 to get voltage
+    // Divide by number of samples to get the mean, then multiply by 3.3/1023 to get voltage
     for(int i=0; i<noOfAnalogPins; i++)
     {
-        voltages[i] = (voltages[i] / smoothSamples) * (5.0 / 1023.0);
+        voltages[i] = (voltages[i] / smoothSamples) * (3.3 / 1023.0);
     }
 }
 
