@@ -1,15 +1,16 @@
 """ Test module for the gate class
 """
-import time
-import os
 import logging
+import os
+import time
 import pytest
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory
+
 import config
-from job_queue import JobQueue
+from serial_analog import AnalogInputs
 from gate import Gate
-from adc import AnalogInput
+from job_queue import JobQueue
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,10 @@ def test_motor_pins(tmp_path):
     Device.pin_factory = factory
     factory.reset()
 
-    #pylint: disable=protected-access
+    # pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
@@ -51,11 +52,11 @@ def test_open_timeout(tmp_path):
     factory.reset()
 
     # Alter safety timer to make test faster
-    config.MAX_TIME_TO_OPEN_CLOSE = 1
+    config.MAX_TIME_TO_OPEN_CLOSE = 2
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -64,7 +65,8 @@ def test_open_timeout(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
-    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.1)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.2)
     test_q.cleanup()
     del test_q
 
@@ -78,11 +80,11 @@ def test_close_timeout(tmp_path):
     factory.reset()
 
     # Alter safety timer to make test faster
-    config.MAX_TIME_TO_OPEN_CLOSE = 1
+    config.MAX_TIME_TO_OPEN_CLOSE = 2
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -91,7 +93,8 @@ def test_close_timeout(tmp_path):
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check that the time matches the time in config.MAX_TIME_TO_OPEN_CLOSE
-    assert time.monotonic()-start == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.01)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.MAX_TIME_TO_OPEN_CLOSE, 0.2)
     test_q.cleanup()
     del test_q
 
@@ -106,19 +109,20 @@ def test_open_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
-    gate.shunt_pin.mock_voltage = 10
+    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
     start = time.monotonic()
     gate.open()
 
-    #Check the gate stopped
+    # Check the gate stopped
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
-    assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     test_q.cleanup()
     del test_q
 
@@ -133,19 +137,20 @@ def test_close_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
-    gate.shunt_pin.mock_voltage = 10
+    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
     start = time.monotonic()
     gate.close()
 
-    #Check the gate stopped
+    # Check the gate stopped
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
     # Check the gate stopped immediately
-    assert time.monotonic()-start == pytest.approx(config.SHUNT_READ_DELAY, 0.01)
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     test_q.cleanup()
     del test_q
 
@@ -167,7 +172,7 @@ def test_mode_changing(tmp_path):
     # Setup gate
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
 
     # Ensure when no saved mode exists, it defaults to normal-home mode
     gate = Gate(test_q)
@@ -208,7 +213,7 @@ def test_setup_button_pins(tmp_path):
     factory.reset()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     _ = Gate(job_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
@@ -224,7 +229,7 @@ def test_setup_button_pins(tmp_path):
         # Check that the pin value is high due to pull up resistor
         assert pin_obj.state == 1
 
-    #Cleanup
+    # Cleanup
     job_q.cleanup()
 
 
@@ -236,7 +241,7 @@ def test_button_callback():
     Device.pin_factory = factory
     factory.reset()
     job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     _ = Gate(job_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
@@ -252,6 +257,6 @@ def test_button_callback():
         # Check job queue has job
         assert job_q.get_nonblocking() == 'open'
 
-    #Cleanup
+    # Cleanup
     job_q.cleanup()
     del job_q

@@ -4,7 +4,7 @@ VALID_USER="pi"
 
 cd /home/${VALID_USER}/smart_gate/
 
-# Ussually do update first but RPi takes too long and it will have been done manually prior
+# Usually do update first but RPi takes too long and it will have been done manually prior
 sudo apt-get install -y \
     python3-dev \
     python3-pip \
@@ -21,6 +21,10 @@ else
     source venv/bin/activate
     pip install -r requirements.txt
 fi
+
+# Compile and upload arduino code
+bash arduino_src/install_and_configure_arduino-cli.sh
+bash arduino_src/upload.sh
 
 #Insall crontab to run run-smart-gate every minute
 crontab -u $VALID_USER - <<EOF

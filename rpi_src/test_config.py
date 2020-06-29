@@ -8,9 +8,9 @@ GPIO_PINS = [config.MOTORPIN0,
              config.BUTTON_INSIDE_PIN,
              config.BUTTON_BOX_PIN]
 
-ANALOG_PINS = [config.SHUNT_PIN0,
-               config.SHUNT_PIN1,
+ANALOG_PINS = [config.SHUNT_PIN,
                config.BATTERY_VOLTAGE_PIN]
+
 
 def test_gpio_pins():
     """Test configuration pin values are logical
@@ -31,4 +31,4 @@ def test_analog_pins():
     # Ensure pins are positive integers between 0 and 3
     for pin in ANALOG_PINS:
         assert isinstance(pin, int)
-        assert 0 <= pin <= 3
+        assert 0 <= pin <= 6

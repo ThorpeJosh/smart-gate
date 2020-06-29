@@ -1,16 +1,18 @@
 """ Unit tests for the main.py module
 """
 import os
-import time
 import threading
+import time
+
 import pytest
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory
-import main
+
 import config
-from job_queue import JobQueue
+import main
+from serial_analog import AnalogInputs
 from gate import Gate
-from adc import AnalogInput
+from job_queue import JobQueue
 
 
 def delayed_put(delay, message, queue):
@@ -32,7 +34,7 @@ def test_email_in_button_callback(caplog):
     Device.pin_factory = factory
     factory.reset()
     test_queue = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     gate = Gate(test_queue)
 
     # Ensure no emails will be sent
@@ -64,12 +66,6 @@ def test_email_in_button_callback(caplog):
     test_queue.cleanup()
 
 
-@pytest.mark.skip(reason="Not sure best way to test this yet")
-def test_main_loop():
-    """ Test for main_loop
-    """
-
-
 def test_lock_open_loop(tmp_path):
     """ Test for lock_open mode loop, to ensure it does not exit until another mode is selected
     """
@@ -78,7 +74,7 @@ def test_lock_open_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)
@@ -89,15 +85,16 @@ def test_lock_open_loop(tmp_path):
     # Ensure queue is empty to start
     assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
-    gate.shunt_pin.mock_voltage = 10
+    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it
     threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
     # put a non lock_open mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_closed', test_queue)).start()
+    threading.Thread(target=lambda: delayed_put(1.5, 'lock_closed', test_queue)).start()
     main.lock_open_loop(gate, test_queue)
-    assert time.monotonic()-start_time == pytest.approx(1, 0.02)
+    time_taken = time.monotonic()-start_time
+    assert time_taken == pytest.approx(1.5, 0.2)
 
     #Cleanup
     test_queue.cleanup()
@@ -111,7 +108,7 @@ def test_lock_closed_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInput.setup()
+    AnalogInputs.handshake()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)
@@ -122,15 +119,16 @@ def test_lock_closed_loop(tmp_path):
     # Ensure queue is empty to start
     assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
-    gate.shunt_pin.mock_voltage = 10
+    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it
     threading.Thread(target=lambda: delayed_put(0.2, 'open', test_queue)).start()
-    # put a non lock_open mode message on the queue in 1 second
-    threading.Thread(target=lambda: delayed_put(1, 'lock_open', test_queue)).start()
+    # put a non lock_closed mode message on the queue in 1 second
+    threading.Thread(target=lambda: delayed_put(1.5, 'lock_open', test_queue)).start()
     main.lock_closed_loop(gate, test_queue)
-    assert time.monotonic()-start_time == pytest.approx(1, 0.02)
+    time_taken = time.monotonic()-start_time
+    assert time_taken == pytest.approx(1.5, 0.2)
 
     #Cleanup
     test_queue.cleanup()
