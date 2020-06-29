@@ -10,4 +10,4 @@ fi
 
 cd /home/${VALID_USER}/smart_gate/
 source venv/bin/activate
-flock -nE 0 -x ~/gate.lock python src/main.py
+flock -nE 0 -x ~/gate.lock python rpi_src/main.py
