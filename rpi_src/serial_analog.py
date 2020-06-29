@@ -45,7 +45,7 @@ class AnalogInputs:
         # Request serial package from arduino by sending capital A
         cls.ser.write("A".encode())
         voltages = [
-            cls.ser.readline().decode("ascii").rstrip()
+            float(cls.ser.readline().decode("ascii").rstrip())
             for _ in range(cls.number_of_inputs)
         ]
         if index == "all":
