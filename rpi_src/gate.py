@@ -174,6 +174,7 @@ class Gate:
         """Callback for when a button is pushed
         button - The button object that triggered the callback
         """
+        self.job_q.validate_and_put("open")
         pin = button.pin.number
         if pin == config.BUTTON_OUTSIDE_PIN:
             if self.current_mode.endswith("away"):
@@ -192,5 +193,3 @@ class Gate:
                 logger.info("Box button pressed")
         else:
             logger.warning("Unknown button pressed")
-
-        self.job_q.validate_and_put("open")
