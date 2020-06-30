@@ -2,28 +2,36 @@
 [![Build Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart_gate%2Fmaster&subject=build%20status)](http://jenkins.thorpe.engineering:8080/job/smart_gate/job/master/) 
 [![Deployment Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart-gate-deploy&subject=deployment%20status)](http://jenkins.thorpe.engineering:8080/job/smart-gate-deploy/)  
 This repo is for a private application of a IOT inspired raspberry pi controller for a household front gate.  
-The gate has 3 input buttons to operate it, a 24V motor, a 24V battery with solar charging, and wifi for internet connectivity.
+In this application the gate is driven by a 24V motor with a 24V battery with solar charging system. 
+An internet connection is supplied by a pair of long range wifi APs in a wireless bridge mode. The Raspberry pi then connects to the AP via ethernet for an internet connection. This Internet connection supports features such as sending email alerts, deploying code updates remotely and a simple API for mode changes and commands to be send remotely.
 
-## GPIO inputs
+Since the RPi has no analog pins, an Arduino UNO is used for all the analog inputs and sends the analog voltages over USB to the RPi upon request.
+When an update is deployed the RPi will compile and upload the new arduino code as the Arduino is connected via USB to the RPi.
+
+This repo code is designed around this specific application, but could be easily forked and applied to different smart-gate applications.
+All the pin numbers and configurable parameters reside in the rpi_src/config.py file to allow easy configuration for different applications.
+
+## RPi Inputs
 * 3 push-buttons (Normally Open, Activating button grounds the pin)
   * Outside the property, activated when entering
   * Inside the property, activated when exiting
   * On the control box mounted on the gate post, used for debugging
-* ADS1115 via I2C
+* Arduino serial via USB
   * Voltage across a shunt to measure current through motor for hit detection
-  * Battery voltage for logging
+  * Battery voltage for logging and alerts
 
-## GPIO outputs
+## RPi outputs
 * Gate Motor (2 pins, driving SPDT relays in a H-bridge configuration)
 
-## Connectivity
-Raspberry pi is fitted with a wifi radio and is connected to a personal VPN for remote access and control
+## Arduino Inputs
+* Analog input from all pins (RPi decides what pins to use/ignore)
 
 ## Modes
 Gate has 3 modes it can operate in
   * Normal - Closed unless a button is pushed then it opens for a period of time then closes again.
     If the gate hits an object when opening, it will stop the motor and wait for another button push.
     If the gate hits an object when closing, it will re-open.
+  * Away - Same as normal but sends email alert when button is pressed
   * Permanently Open - Gate opens and stays there until mode is changed
   * Permanently Closed - Gate closes and stays there until mode is changed
   
