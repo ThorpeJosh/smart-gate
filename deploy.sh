@@ -23,7 +23,7 @@ else
 fi
 
 # Compile and upload arduino code
-bash arduino_src/install_and_configure_arduino-cli.sh
+sudo bash arduino_src/install_and_configure_arduino-cli.sh
 bash arduino_src/upload.sh
 
 #Insall crontab to run run-smart-gate every minute
