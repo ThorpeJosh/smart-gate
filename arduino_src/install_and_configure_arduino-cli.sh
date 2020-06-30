@@ -5,7 +5,7 @@ if [ $(whoami) = 'pi' ]
 then
     # Install arduino-cli and move it to /usr/bin
     echo "Installing arduino-cli"
-    sudo curl -L --retry 5 --retry-delay 5 https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sh
+    curl -L --retry 5 --retry-delay 5 https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sudo BINDIR=/usr/bin sh
 fi
 
 
