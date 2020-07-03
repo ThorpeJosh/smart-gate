@@ -1,11 +1,22 @@
 
 // vim: filetype=cpp
-/*Arduino code to send all analog values of serial to RPi
-All analog readings will be smoothed and converted to voltages (flaots)
+/*Arduino code to communicate with the RPi over serial.
+Information shared with RPi includes analog pin voltages and other inputs that trigger the gate.
+All analog readings will be smoothed and converted to voltages (floats)
+
+Serial communication contract as follows:
+
+Handshake:
+    Arduino sends 'A', RPi responds with 'A'
+Analog Voltages:
+    RPi sends 'V', Arduino responds with 'V' followed by voltages[]
+Gate Trigger:
+    Arduino sends 'O', followed trigger message, RPi doesn't respond.
+
 */
 
 const int noOfAnalogPins = 6;
-float voltages[6];
+float voltages[noOfAnalogPins];
 
 void setup()
 {
