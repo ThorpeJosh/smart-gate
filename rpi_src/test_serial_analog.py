@@ -6,7 +6,8 @@ from serial_analog import AnalogInputs
 
 def test_setup_lock(caplog):
     """ Test that the AnalogInput setup lock to ensure that
-    initialize() gets run exactly once before any pins are initialized else it should raise an exception
+    initialize() gets run exactly once before any pins are initialized 
+    else it should raise an exception
     """
     AnalogInputs.initialize()
 

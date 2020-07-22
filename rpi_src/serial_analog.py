@@ -5,6 +5,7 @@ import time
 import queue
 import threading
 import serial
+import _thread
 
 logger = logging.getLogger("root")
 
@@ -89,32 +90,39 @@ class AnalogInputs:
         """ Indefinite serial reading
         This is done with a blocking command to reduce cpu usage.
         """
+        # pylint: disable=too-many-nested-blocks
         while True:
-            cls.ser.timeout = 1
-            data = cls.ser.readline().decode("ascii").rstrip()
-            if data == 'V':
-                # Remove serial timeout so it doesn't hang in here
-                cls.ser.timeout = 0
-                # Arduino is sending analog voltages, collect and put on queue
-                voltages = [cls.ser.readline().decode("ascii").rstrip()
-                            for _ in range(cls.number_of_inputs)]
-                checksum = cls.ser.readline().decode("ascii").rstrip()
-                try:
-                    # Check that the voltages are valid floats
-                    voltages = [float(voltage) for voltage in voltages]
-                    checksum = float(checksum)
-                    # Check that the voltage checksum matches the data received
-                    if round(sum(voltages), cls.precision) == checksum:
-                        for voltage in voltages:
-                            cls.arduino_queue.put(voltage)
-                    else:
-                        raise ValueError("Sum of voltages {} does not match checksum {}".format(
-                            sum(voltages), checksum))
-                except ValueError as err:
-                    logger.warning(err)
-                    time.sleep(0.001)
-                    cls.ser.flushInput()
-                    logger.debug("Requesting another set of voltages from Arduino")
-                    cls.ser.write("V".encode())
-            elif data == 'O':
-                pass
+            # Catch serial errors
+            try:
+                cls.ser.timeout = 1
+                data = cls.ser.readline().decode("ascii").rstrip()
+                if data == 'V':
+                    # Remove serial timeout so it doesn't hang in here
+                    cls.ser.timeout = 0
+                    # Arduino is sending analog voltages, collect and put on queue
+                    voltages = [cls.ser.readline().decode("ascii").rstrip()
+                                for _ in range(cls.number_of_inputs)]
+                    checksum = cls.ser.readline().decode("ascii").rstrip()
+                    try:
+                        # Check that the voltages are valid floats
+                        voltages = [float(voltage) for voltage in voltages]
+                        checksum = float(checksum)
+                        # Check that the voltage checksum matches the data received
+                        if round(sum(voltages), cls.precision) == checksum:
+                            for voltage in voltages:
+                                cls.arduino_queue.put(voltage)
+                        else:
+                            raise ValueError("Sum of voltages {} does not match checksum {}".format(
+                                sum(voltages), checksum))
+                    except ValueError as err:
+                        logger.warning(err)
+                        time.sleep(0.001)
+                        cls.ser.flushInput()
+                        logger.debug("Requesting another set of voltages from Arduino")
+                        cls.ser.write("V".encode())
+                elif data == 'O':
+                    pass
+            except serial.serialutil.SerialException as err:
+                logger.critical('Shutting down gate due to serial error %s', err)
+                _thread.interrupt_main()
+                return
