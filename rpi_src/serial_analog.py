@@ -5,7 +5,6 @@ import time
 import queue
 import threading
 import serial
-import _thread
 
 logger = logging.getLogger("root")
 
