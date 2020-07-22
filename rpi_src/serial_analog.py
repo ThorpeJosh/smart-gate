@@ -18,20 +18,27 @@ class AnalogInputs:
     The handshake must be called prior to any values being returned
     """
 
-    number_of_inputs = 6
-    mock_mode = False
-    handshake_lock = False
-    try:
-        ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
-        ser.flush()
-        # Start the serial thread
-        read_thread = threading.Thread(target=read_serial, daemon=True)
-    except serial.serialutil.SerialException as error:
-        logger.warning("Serial device not found: %s", error)
-        logger.info("Entering mock analog mode")
-        mock_mode = True
-        mock_voltages = [0] * number_of_inputs
-    arduino_queue = queue.Queue()
+    @classmethod
+    def initialize(cls):
+        """ Method similar to __init__ but it does not make sense for any instances to be created
+        of this class.
+        This method initializes the class variables and sets up mock mode if necessary.
+        """
+        cls.number_of_inputs = 6
+        cls.mock_mode = False
+        cls.handshake_lock = False
+        try:
+            cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
+            cls.ser.flush()
+            # Start the serial thread
+            threading.Thread(target=cls.read_serial, daemon=True).start()
+        except serial.serialutil.SerialException as error:
+            logger.warning("Serial device not found: %s", error)
+            logger.info("Entering mock analog mode")
+            cls.mock_mode = True
+            cls.mock_voltages = [0] * cls.number_of_inputs
+        cls.arduino_queue = queue.Queue()
+        cls.handshake()
 
     @classmethod
     def get(cls, index="all"):
@@ -87,8 +94,10 @@ class AnalogInputs:
                             for _ in range(cls.number_of_inputs)]
                 checksum = cls.ser.readline().decode("ascii").rstrip()
                 try:
+                    # Check that the voltages are valid floats
                     voltages = [float(voltage) for voltage in voltages]
                     checksum = float(checksum)
+                    # Check that the voltage checksum matches the data received
                     if sum(voltages) == checksum:
                         for voltage in voltages:
                             cls.arduino_queue.put(voltage)
