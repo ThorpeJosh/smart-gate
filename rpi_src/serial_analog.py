@@ -59,7 +59,7 @@ class AnalogInputs:
 
         # Request serial package from arduino by sending capital V
         cls.ser.write("V".encode())
-        voltages = [cls.arduino_queue.get() for _ in range(cls.number_of_inputs)]
+        voltages = [cls.arduino_queue.get(timeout=0.1) for _ in range(cls.number_of_inputs)]
         if index == "all":
             return voltages
         return voltages[index]
@@ -124,5 +124,4 @@ class AnalogInputs:
                     pass
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
-                _thread.interrupt_main()
                 return
