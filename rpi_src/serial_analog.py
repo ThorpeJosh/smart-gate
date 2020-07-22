@@ -24,7 +24,10 @@ class AnalogInputs:
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
         """
+        # Number of analog channels on the arduino
         cls.number_of_inputs = 6
+        # Voltage decimal places
+        cls.precision = 4
         cls.mock_mode = False
         cls.handshake_lock = False
         try:
@@ -87,8 +90,11 @@ class AnalogInputs:
         This is done with a blocking command to reduce cpu usage.
         """
         while True:
+            cls.ser.timeout = 1
             data = cls.ser.readline().decode("ascii").rstrip()
             if data == 'V':
+                # Remove serial timeout so it doesn't hang in here
+                cls.ser.timeout = 0
                 # Arduino is sending analog voltages, collect and put on queue
                 voltages = [cls.ser.readline().decode("ascii").rstrip()
                             for _ in range(cls.number_of_inputs)]
@@ -98,7 +104,7 @@ class AnalogInputs:
                     voltages = [float(voltage) for voltage in voltages]
                     checksum = float(checksum)
                     # Check that the voltage checksum matches the data received
-                    if sum(voltages) == checksum:
+                    if round(sum(voltages), cls.precision) == checksum:
                         for voltage in voltages:
                             cls.arduino_queue.put(voltage)
                     else:
