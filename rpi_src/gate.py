@@ -74,7 +74,16 @@ class Gate:
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
         self._open()
         time.sleep(config.SHUNT_READ_DELAY)
-        while AnalogInputs.get(self.shunt_pin) < config.SHUNT_THRESHOLD:
+        while True:
+            # Check shunt voltage
+            shunt_voltage = AnalogInputs.get(self.shunt_pin)
+            if shunt_voltage > config.SHUNT_THRESHOLD:
+                logger.debug('Shunt threshold exceeded: %s', shunt_voltage)
+                self._stop()
+                self.current_state = "opened"
+                return
+
+            # Check security timer
             if time.monotonic() > security_time:
                 logger.critical("Open security timer has elapsed")
                 self.current_state = "Open time error"
@@ -83,11 +92,9 @@ class Gate:
             # This will allow for a close request to jump out of opening & skip holding
             job = self.job_q.get_nonblocking()
             if job == "close":
+                self._stop()
                 self.current_state = "holding"
                 return
-        self._stop()
-        self.current_state = "opened"
-        return
 
     def hold(self):
         """Method to control hold the gate open while cars drive through
@@ -123,20 +130,27 @@ class Gate:
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
         self._close()
         time.sleep(config.SHUNT_READ_DELAY)
-        while AnalogInputs.get(self.shunt_pin) < config.SHUNT_THRESHOLD:
+        while True:
+            # Check shunt voltage
+            shunt_voltage = AnalogInputs.get(self.shunt_pin)
+            if shunt_voltage > config.SHUNT_THRESHOLD:
+                logger.debug('Shunt threshold exceeded: %s', shunt_voltage)
+                self._stop()
+                self.current_state = "closed"
+                logger.debug("Gate closed")
+                return
+            # Check security timer
             if time.monotonic() > security_time:
                 logger.critical("Close security timer has elapsed")
                 self.current_state = "Close time error"
                 self._stop()
                 return
+            # Allow for open request to jump out of closing
             job = self.job_q.get_nonblocking()
             if job == "open":
+                self._stop()
                 self.current_state = "opening"
                 return
-        self._stop()
-        self.current_state = "closed"
-        logger.debug("Gate closed")
-        return
 
     def _stop(self):
         """Stop the gate

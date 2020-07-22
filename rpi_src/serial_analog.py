@@ -5,6 +5,7 @@ import time
 import queue
 import threading
 import serial
+import _thread
 
 logger = logging.getLogger("root")
 
@@ -18,20 +19,30 @@ class AnalogInputs:
     The handshake must be called prior to any values being returned
     """
 
-    number_of_inputs = 6
-    mock_mode = False
-    handshake_lock = False
-    try:
-        ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
-        ser.flush()
-        # Start the serial thread
-        read_thread = threading.Thread(target=read_serial, daemon=True)
-    except serial.serialutil.SerialException as error:
-        logger.warning("Serial device not found: %s", error)
-        logger.info("Entering mock analog mode")
-        mock_mode = True
-        mock_voltages = [0] * number_of_inputs
-    arduino_queue = queue.Queue()
+    @classmethod
+    def initialize(cls):
+        """ Method similar to __init__ but it does not make sense for any instances to be created
+        of this class.
+        This method initializes the class variables and sets up mock mode if necessary.
+        """
+        # Number of analog channels on the arduino
+        cls.number_of_inputs = 6
+        # Voltage decimal places
+        cls.precision = 4
+        cls.mock_mode = False
+        cls.handshake_lock = False
+        try:
+            cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
+            cls.ser.flush()
+            # Start the serial thread
+            threading.Thread(target=cls.read_serial, daemon=True).start()
+        except serial.serialutil.SerialException as error:
+            logger.warning("Serial device not found: %s", error)
+            logger.info("Entering mock analog mode")
+            cls.mock_mode = True
+            cls.mock_voltages = [0] * cls.number_of_inputs
+        cls.arduino_queue = queue.Queue()
+        cls.handshake()
 
     @classmethod
     def get(cls, index="all"):
@@ -79,27 +90,39 @@ class AnalogInputs:
         """ Indefinite serial reading
         This is done with a blocking command to reduce cpu usage.
         """
+        # pylint: disable=too-many-nested-blocks
         while True:
-            data = cls.ser.readline().decode("ascii").rstrip()
-            if data == 'V':
-                # Arduino is sending analog voltages, collect and put on queue
-                voltages = [cls.ser.readline().decode("ascii").rstrip()
-                            for _ in range(cls.number_of_inputs)]
-                checksum = cls.ser.readline().decode("ascii").rstrip()
-                try:
-                    voltages = [float(voltage) for voltage in voltages]
-                    checksum = float(checksum)
-                    if sum(voltages) == checksum:
-                        for voltage in voltages:
-                            cls.arduino_queue.put(voltage)
-                    else:
-                        raise ValueError("Sum of voltages {} does not match checksum {}".format(
-                            sum(voltages), checksum))
-                except ValueError as err:
-                    logger.warning(err)
-                    time.sleep(0.001)
-                    cls.ser.flushInput()
-                    logger.debug("Requesting another set of voltages from Arduino")
-                    cls.ser.write("V".encode())
-            elif data == 'O':
-                pass
+            # Catch serial errors
+            try:
+                cls.ser.timeout = 1
+                data = cls.ser.readline().decode("ascii").rstrip()
+                if data == 'V':
+                    # Remove serial timeout so it doesn't hang in here
+                    cls.ser.timeout = 0
+                    # Arduino is sending analog voltages, collect and put on queue
+                    voltages = [cls.ser.readline().decode("ascii").rstrip()
+                                for _ in range(cls.number_of_inputs)]
+                    checksum = cls.ser.readline().decode("ascii").rstrip()
+                    try:
+                        # Check that the voltages are valid floats
+                        voltages = [float(voltage) for voltage in voltages]
+                        checksum = float(checksum)
+                        # Check that the voltage checksum matches the data received
+                        if round(sum(voltages), cls.precision) == checksum:
+                            for voltage in voltages:
+                                cls.arduino_queue.put(voltage)
+                        else:
+                            raise ValueError("Sum of voltages {} does not match checksum {}".format(
+                                sum(voltages), checksum))
+                    except ValueError as err:
+                        logger.warning(err)
+                        time.sleep(0.001)
+                        cls.ser.flushInput()
+                        logger.debug("Requesting another set of voltages from Arduino")
+                        cls.ser.write("V".encode())
+                elif data == 'O':
+                    pass
+            except serial.serialutil.SerialException as err:
+                logger.critical('Shutting down gate due to serial error %s', err)
+                _thread.interrupt_main()
+                return

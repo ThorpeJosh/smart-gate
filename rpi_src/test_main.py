@@ -34,7 +34,7 @@ def test_email_in_button_callback(caplog):
     Device.pin_factory = factory
     factory.reset()
     test_queue = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_queue)
 
     # Ensure no emails will be sent
@@ -74,7 +74,7 @@ def test_lock_open_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)
@@ -108,7 +108,7 @@ def test_lock_closed_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)

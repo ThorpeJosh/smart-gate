@@ -26,7 +26,7 @@ def test_motor_pins(tmp_path):
     # pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
@@ -56,7 +56,7 @@ def test_open_timeout(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -84,7 +84,7 @@ def test_close_timeout(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -109,7 +109,7 @@ def test_open_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
@@ -137,7 +137,7 @@ def test_close_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
@@ -172,7 +172,7 @@ def test_mode_changing(tmp_path):
     # Setup gate
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
 
     # Ensure when no saved mode exists, it defaults to normal-home mode
     gate = Gate(test_q)
@@ -213,7 +213,7 @@ def test_setup_button_pins(tmp_path):
     factory.reset()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     _ = Gate(job_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
@@ -241,7 +241,7 @@ def test_button_callback():
     Device.pin_factory = factory
     factory.reset()
     job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
     _ = Gate(job_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:

@@ -6,9 +6,10 @@ from serial_analog import AnalogInputs
 
 def test_setup_lock(caplog):
     """ Test that the AnalogInput setup lock to ensure that
-    setup() gets run exactly once before any pins are initialized else it should raise an exception
+    initialize() gets run exactly once before any pins are initialized
+    else it should raise an exception
     """
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
 
     # Sleep to wait for logs from previous tests threads that are still shutting down
     time.sleep(1)
@@ -25,7 +26,7 @@ def test_setup_lock(caplog):
 def test_mock_input():
     """ Test to make sure the mock voltage and value intefaces are working
     """
-    AnalogInputs.handshake()
+    AnalogInputs.initialize()
 
     # Set a mock voltage
     voltage = 1.234
