@@ -8,6 +8,9 @@ import serial
 
 logger = logging.getLogger("root")
 
+class AnalogSerialError(Exception):
+    """ Class of errors to be raised if something goes wrong with the serial ardiuno interface
+    """
 
 class AnalogInputs:
     """ Class to manage the aquisition of analog voltages from an arduino.
@@ -58,10 +61,13 @@ class AnalogInputs:
 
         # Request serial package from arduino by sending capital V
         cls.ser.write("V".encode())
-        voltages = [cls.arduino_queue.get(timeout=0.1) for _ in range(cls.number_of_inputs)]
-        if index == "all":
-            return voltages
-        return voltages[index]
+        try:
+            voltages = [cls.arduino_queue.get(timeout=0.5) for _ in range(cls.number_of_inputs)]
+            if index == "all":
+                return voltages
+            return voltages[index]
+        except queue.Empty:
+            raise AnalogSerialError('Arduino Queue was empty when trying to get voltages')
 
     @classmethod
     def handshake(cls):
