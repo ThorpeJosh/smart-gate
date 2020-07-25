@@ -37,14 +37,16 @@ class BatteryVoltageLog:
         # Schedule job
         schedule.every(1).hour.at(":00").do(self.scheduled_job)
 
+    @staticmethod
+    def analog_to_battery_voltage(analog_voltage):
+        """ Calculates battery voltage from the 0-3.3v analog voltage
+        """
+        return round(analog_voltage * config.BATTERY_VOLTAGE_CORRECTION_FACTOR, 1)
+
     def scheduled_job(self):
         """scheduled job
         """
-        bat_volt = round(
-            AnalogInputs.get(self.battery_pin)
-            * config.BATTERY_VOLTAGE_CORRECTION_FACTOR,
-            1,
-        )
+        bat_volt = self.analog_to_battery_voltage(AnalogInputs.get(self.battery_pin))
         if 24.5 <= bat_volt <= 29.6:
             self.bat_logger.info("%sv", bat_volt)
         elif 24 < bat_volt < 24.5:

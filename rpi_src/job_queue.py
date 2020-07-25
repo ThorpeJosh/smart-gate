@@ -5,6 +5,9 @@ import os
 import queue
 import subprocess
 import threading
+import config
+from battery_voltage_log import BatteryVoltageLog
+from serial_analog import AnalogInputs
 
 logger = logging.getLogger('root')
 
@@ -72,7 +75,16 @@ class JobQueue(queue.Queue):
                     # Cleanup input message
                     job = job.strip().replace('\n', '')
                     logger.debug('Received message via pipe: %s', job)
+
+                    # Check if message is for debugging
+                    if job == 'log_battery':
+                        # log battery voltage and do not put message on queue
+                        bat_voltage = BatteryVoltageLog.analog_to_battery_voltage(
+                            AnalogInputs.get(config.BATTERY_VOLTAGE_PIN))
+                        logger.debug("Battery voltage: %sv", bat_voltage)
+                        continue
+
                     self.validate_and_put(job)
-                    if job.strip().replace('\n', '') == 'kill':
+                    if job == 'kill':
                         logger.warning('Received kill command on read_fifo thread')
                         return
