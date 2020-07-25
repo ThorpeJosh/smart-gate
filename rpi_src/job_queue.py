@@ -69,6 +69,8 @@ class JobQueue(queue.Queue):
         while True:
             with open(self.pipe_file, 'r') as fifo:
                 for job in fifo:
+                    # Cleanup input message
+                    job = job.strip().replace('\n', '')
                     logger.debug('Received message via pipe: %s', job)
                     self.validate_and_put(job)
                     if job.strip().replace('\n', '') == 'kill':

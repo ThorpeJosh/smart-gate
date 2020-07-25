@@ -61,7 +61,7 @@ class Gate:
         """Open the gate
         """
         self.current_state = "opening"
-        logger.debug("opening gate")
+        logger.debug("opening gate motor")
         self.motor_pin0.off()
         self.motor_pin1.on()
 
@@ -116,7 +116,7 @@ class Gate:
         """Close the gate
         """
         self.current_state = "closing"
-        logger.debug("closing gate")
+        logger.debug("closing gate motor")
         self.motor_pin0.on()
         self.motor_pin1.off()
 

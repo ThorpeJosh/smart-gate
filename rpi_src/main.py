@@ -103,4 +103,5 @@ if __name__ == '__main__':
     except Exception as exception:  # pylint: disable=broad-except
         logger.critical('Critical Exception: %s', exception)
     finally:
+        logger.debug('running cleanup')
         job_q.cleanup()
