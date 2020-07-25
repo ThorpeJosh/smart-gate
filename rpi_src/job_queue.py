@@ -80,8 +80,8 @@ class JobQueue(queue.Queue):
                     if job == 'log_battery':
                         # log battery voltage and do not put message on queue
                         bat_voltage = BatteryVoltageLog.analog_to_battery_voltage(
-                            AnalogInputs.get(config.BATTERY_VOLTAGE_PIN))
-                        logger.debug("Battery voltage: %sv", bat_voltage)
+                            AnalogInputs.get(config.BATTERY_VOLTAGE_PIN), 2)
+                        logger.debug("Battery voltage: %.2fv", bat_voltage)
                         continue
 
                     self.validate_and_put(job)
