@@ -27,7 +27,7 @@ SHUNT_READ_DELAY = 0.5
 MAX_TIME_TO_OPEN_CLOSE = 30
 HOLD_OPEN_TIME = 10
 
-BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.8  # 10k 1k voltage divider
+BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.7  # 10k 1k voltage divider
 
 # Commands that the gate needs to be able to handle on the job queue
 COMMANDS = ["open", "close"]
