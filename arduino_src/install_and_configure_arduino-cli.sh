@@ -15,3 +15,12 @@ arduino-cli config init
 arduino-cli core update-index
 # Install core for Arduino Uno
 arduino-cli core install arduino:avr
+
+# Get RadioHead arduino library
+mkdir -p ~/Arduino/libraries/
+cd ~/Arduino/libraries/
+echo "Getting RadioHead library"
+RH_NAME='RadioHead-1.111.zip'
+wget http://www.airspayce.com/mikem/arduino/RadioHead/"$RH_NAME"
+unzip -oq "$RH_NAME"
+rm "$RH_NAME"

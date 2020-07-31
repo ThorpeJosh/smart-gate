@@ -1,4 +1,3 @@
-
 // vim: filetype=cpp
 /*Arduino code to communicate with the RPi over serial.
 Information shared with RPi includes analog pin voltages and other inputs that trigger the gate.
@@ -11,16 +10,26 @@ Handshake:
 Analog Voltages:
     RPi sends 'V', Arduino responds with 'V' followed by voltages[] and then a checksum
 Gate Trigger:
-    Arduino sends 'O', followed trigger message, RPi doesn't respond.
+    Arduino sends 'O', followed by a trigger message, RPi doesn't respond.
 
 */
+#include <RH_ASK.h>
+#include <SPI.h>
 
+// Configurable Parameters 
 const int noOfAnalogPins = 6;
 const int voltageDecimalPlaces = 4;
+const int lengthOfRadioKey = 8; //Length of expected secret key to receive over 433MHz radio
+
+
+// Globals
 float voltages[noOfAnalogPins];
 float checksum;
 byte incomingByte;
+uint8_t secretKey[lengthOfRadioKey]; 
+uint8_t secretKeyLen = sizeof(secretKey);
 
+RH_ASK rf_driver;
 
 void setup()
 {
@@ -29,8 +38,11 @@ void setup()
     // start serial at 115200bps
     Serial.begin(115200);
     serialHandshake();
+    // Initialize the ASK receiver
+    rf_driver.init();
+    // Get the radio receiver secret key from the RPi
+    getRadioKey();
 }
-
 
 void loop()
 {
@@ -41,6 +53,18 @@ void loop()
         if(incomingByte == 'V')
         {
             sendAnalogVoltages();
+        }
+    }
+    // Check if radio message has been received
+    // Set buffer to size of expected message
+    uint8_t buf[lengthOfRadioKey];
+    uint8_t bufLen = sizeof(buf);
+    if (rf_driver.recv(buf, &bufLen))
+    {
+        if (compareKeys(&secretKey[0], &buf[0], lengthOfRadioKey))
+        {
+            Serial.println('O'); // Send capital 'O' to rpi to open the gate
+            Serial.println("Radio received correct passphrase");
         }
     }
 }
@@ -110,4 +134,40 @@ void serialHandshake()
         delay(200);
     }
     flushSerialInputBuffer();
+}
+
+
+void getRadioKey()
+{
+    // Send an 'R' to request the secret key
+    flushSerialInputBuffer();
+    Serial.println('R');
+    for(int i=0; i<lengthOfRadioKey; i++)
+    {
+        Serial.println("Getting key char");
+        // Wait for serial packets
+        while (Serial.available() <= 0)
+        {
+            Serial.println("waiting for next char");
+            delay(1000);
+        }
+        secretKey[i] = Serial.read();
+    }
+}
+
+
+bool compareKeys(uint8_t key1[], uint8_t key2[], int keys_length)
+{
+    for (int i=0; i<keys_length; i++)
+    {
+        if (key1[i] == key2[i])
+        {
+            continue;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return true;
 }
