@@ -5,6 +5,7 @@ import time
 import queue
 import threading
 import serial
+import config
 
 logger = logging.getLogger("root")
 
@@ -102,6 +103,7 @@ Arduino will not be able to trigger the gate opening")
         This is done with a blocking command to reduce cpu usage.
         """
         # pylint: disable=too-many-nested-blocks
+        # pylint: disable=too-many-branches
         while True:
             # Catch serial errors
             try:
@@ -140,6 +142,25 @@ Arduino will not be able to trigger the gate opening")
                         cls.job_q.validate_and_put('open')
                     except AttributeError:
                         logger.debug("Arduino tried to open gate, but didn't have access to queue")
+
+                elif data == 'R':
+                    # Arduino is requesting the 433MHz radio secret key
+                    try:
+                        with open(config.RADIO_KEY_FILE, "r") as radio_key_file:
+                            key = radio_key_file.read()
+                            key = key.strip().replace("\n", "")
+                            logger.debug("Read radio key from file: %s", key)
+                            if len(key) != 8:
+                                raise ValueError
+                            logger.debug("Sending radio secret key to Arduino")
+                            cls.ser.write(key.encode())
+                    except FileNotFoundError:
+                        logger.warning("Arduino has requested secret key but %s does not exist",
+                                       config.RADIO_KEY_FILE)
+                        cls.ser.write(('x'*10).encode())
+                    except ValueError:
+                        logger.warning("Radio key is not 8 characters long")
+                        cls.ser.write(('x'*10).encode())
 
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
