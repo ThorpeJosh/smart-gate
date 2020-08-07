@@ -22,7 +22,7 @@ class AnalogInputs:
     """
 
     @classmethod
-    def initialize(cls):
+    def initialize(cls, job_q=None):
         """ Method similar to __init__ but it does not make sense for any instances to be created
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
@@ -33,6 +33,12 @@ class AnalogInputs:
         cls.precision = 4
         cls.mock_mode = False
         cls.handshake_lock = False
+        # Give cls.read_serial access to the global job_q
+        if job_q is not None:
+            cls.job_q = job_q
+        else:
+            logger.warning("Job Queue was not passed to AnalogInputs,\
+Arduino will not be able to trigger the gate opening")
         try:
             cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
             cls.ser.flush()
@@ -125,8 +131,16 @@ class AnalogInputs:
                         cls.ser.flushInput()
                         logger.debug("Requesting another set of voltages from Arduino")
                         cls.ser.write("V".encode())
+
                 elif data == 'O':
-                    pass
+                    # Arduino has requested the gate to open
+                    message = cls.ser.readline().decode("ascii").rstrip()
+                    logger.debug("Arduino: %s", message)
+                    try:
+                        cls.job_q.validate_and_put('open')
+                    except AttributeError:
+                        logger.debug("Arduino tried to open gate, but didn't have access to queue")
+
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
                 return
