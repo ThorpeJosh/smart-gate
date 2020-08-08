@@ -47,7 +47,7 @@ FIFO_FILE = os.path.join(str(Path.home()), "pipe")
 SAVED_MODE_FILE = os.path.join(str(Path.home()), "saved_mode.txt")
 
 # 8 Character passwork that 433MHz arduino receiver is looking for, if 433MHz receiver is used
-RADIO_KEY_FILE = os.path.join(str(Path.home()), ".email_keys.json")
+RADIO_KEY_FILE = os.path.join(str(Path.home()), ".radio_key")
 
 # Load email config json
 try:
