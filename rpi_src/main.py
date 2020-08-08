@@ -85,7 +85,7 @@ def lock_open_loop(_gate, queue):
 if __name__ == '__main__':
     logger.info('Starting smart gate')
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
-    AnalogInputs.initialize()
+    AnalogInputs.initialize(job_q)
     gate = Gate(job_q)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()
