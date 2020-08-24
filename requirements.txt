@@ -1,5 +1,5 @@
 pyserial
-pylint
+pylint==2.5.3
 pytest
 pathlib
 schedule
