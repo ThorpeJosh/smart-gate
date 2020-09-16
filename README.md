@@ -11,6 +11,8 @@ When an update is deployed the RPi will compile and upload the new arduino code 
 This repo code is designed around this specific application, but could be easily forked and applied to different smart-gate applications.
 All the pin numbers and configurable parameters reside in the rpi_src/config.py file to allow easy configuration for different applications.
 
+![Screenshot](https://github.com/ThorpeJosh/smart-gate/blob/schematics/reference/smart_gate_schematics.png?raw=true)
+
 ## RPi Inputs
 * 3 push-buttons (Normally Open, Activating button grounds the pin)
   * Outside the property, activated when entering
