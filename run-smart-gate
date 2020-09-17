@@ -8,6 +8,6 @@ then
     exit 1
 fi
 
-cd /home/${VALID_USER}/smart_gate/
+cd /home/${VALID_USER}/smart-gate/
 source venv/bin/activate
 flock -nE 0 -x ~/gate.lock python rpi_src/main.py
