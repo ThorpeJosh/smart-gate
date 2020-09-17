@@ -57,12 +57,19 @@ To enable email alerts, an email config must exist at ~/.email_keys.json followi
 ```
 
 ## 433MHz Radio Control (Optional)
-The gate can be opened with cheap 433MHz radios when a receiver is fitted to the Arduino. See the wiring diagram for the how to wire the receiver, and code to program the transmitters can be found in arduino_src/TransmitterSketch/TransmitterSketch.ino
-The 8 character secret for the Arduino to listen for, must be saved in a file on the RPi at ~/.radio_key
+The gate can be opened with cheap 433MHz radios when a receiver is fitted to the Arduino. See the wiring diagram for the how to wire the receiver, and code to program the transmitters can be found in arduino_src/TransmitterSketch/TransmitterSketch.ino\
+
+The 8 character secret for the Arduino to listen for, must be saved in a file on the RPi at ~/.radio_key\
 The RPi will automatically send this key to the Arduino when the serial handshake is completed.
 
 ## Termux UI (Android)
-The gate can be controlled via ssh from any computer
+The gate can be controlled via ssh from any computer or mobile. For a simple alias based ui, see shell_ui/aliases  
+
+To install or update a Termux UI for android devices, run the following in a Termux shell
+```bash
+curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | sh
+```
+Termux can be found at [termux.com](https://termux.com/)
 
 ## Working on this repository
 Instructions for Debian based OS
