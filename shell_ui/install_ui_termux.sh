@@ -11,14 +11,14 @@ fi
 if [ -z "$ip" ]
 then 
     echo "ip for smart-gate server not set"
-    echo "run \"export ip=<server ip>\""
+    echo "run \"export ip=<server ip>\" first"
     exit 0
 fi
 
 cd
 echo "Downloading UI aliases"
 curl --fail -L --retry 5 --retry-delay 5 https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/aliases -o aliases
-sed 's/$ip/'$ip'/g' aliases
+sed -i 's/$ip/'$ip'/g' aliases
 
 BASHRC="../usr/etc/bash.bashrc"
 # Check if aliases exist in bashrc
