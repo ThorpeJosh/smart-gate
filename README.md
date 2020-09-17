@@ -64,15 +64,39 @@ The RPi will automatically send this key to the Arduino when the serial handshak
 
 ## Termux UI (Android)
 The gate can be controlled via ssh from any computer or mobile.\
-For a simple alias based ui, see shell_ui/aliases, consider appending this file to your bashrc.  
+For a simple alias based ui, see shell_ui/aliases, and consider appending this file to your bashrc.  
 
-To install or update a Termux UI for android devices, set your smart-gate RPi up with a static ip on a local network or vpn.\
-Then run the following in a Termux shell substituting the ip address of the RPi smart-gate server.
+To install or update a Termux UI for android devices:\
+* Set your smart-gate RPi up with a static ip on a local network or vpn
+* Dowload Termux app on your android, Info at [termux.com](https://termux.com/)
+* Install open-ssh in Termux and setup ssh-keys with the RPi server
+* Then run the following in a Termux shell substituting the ip address of the RPi smart-gate server.
 ```bash
 export ip=192.168.0.5
 curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | bash
 ```
-Termux can be found at [termux.com](https://termux.com/)
+
+## Deploying to a Raspberry Pi
+Instructions for a Debian based OS like Raspbian/Raspberry Pi OS.
+### Installation
+Install python3 and virtualenv
+```bash
+sudo apt update && sudo apt install -y python3-dev virtualenv
+```
+
+Clone this repo in the pi users home directory
+```bash
+cd /home/pi
+git clone https://github.com/ThorpeJosh/smart-gate.git
+```
+
+### Deployment
+To deploy simply run
+```bash
+bash smart-gate/deploy.sh
+```
+This will setup a virtual environment and install all requirements.
+It also adds a cronjob to the pi user to run the smart-gate program automatically.
 
 ## Working on this repository
 Instructions for Debian based OS
