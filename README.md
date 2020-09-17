@@ -63,10 +63,13 @@ The 8 character secret for the Arduino to listen for, must be saved in a file on
 The RPi will automatically send this key to the Arduino when the serial handshake is completed.
 
 ## Termux UI (Android)
-The gate can be controlled via ssh from any computer or mobile. For a simple alias based ui, see shell_ui/aliases  
+The gate can be controlled via ssh from any computer or mobile.\
+For a simple alias based ui, see shell_ui/aliases, consider appending this file to your bashrc.  
 
-To install or update a Termux UI for android devices, run the following in a Termux shell
+To install or update a Termux UI for android devices, set your smart-gate RPi up with a static ip on a local network or vpn.\
+Then run the following in a Termux shell substituting the ip address of the RPi smart-gate server.
 ```bash
+export ip=192.168.0.5
 curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | bash
 ```
 Termux can be found at [termux.com](https://termux.com/)
