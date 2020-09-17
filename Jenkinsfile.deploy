@@ -52,8 +52,8 @@ pipeline {
                     ssh -v -i ${KEY} -o StrictHostKeyChecking=no pi@10.0.0.37 "
                     crontab -r
                     pkill python
-                    git clone git@github.com:ThorpeJosh/smart_gate.git
-                    cd smart_gate
+                    git clone git@github.com:ThorpeJosh/smart-gate.git
+                    cd smart-gate
                     git fetch --all
                     git reset --hard origin/master
                     bash deploy.sh"
