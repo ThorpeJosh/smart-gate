@@ -69,6 +69,7 @@ To install or update a Termux UI for android devices, run the following in a Ter
 ```bash
 curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | sh
 ```
+Termux can be found at [termux.com](https://termux.com/)
 
 ## Working on this repository
 Instructions for Debian based OS
