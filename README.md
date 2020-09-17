@@ -67,7 +67,7 @@ The gate can be controlled via ssh from any computer or mobile. For a simple ali
 
 To install or update a Termux UI for android devices, run the following in a Termux shell
 ```bash
-curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | sh
+curl -sS https://raw.githubusercontent.com/ThorpeJosh/smart-gate/master/shell_ui/install_ui_termux.sh | bash
 ```
 Termux can be found at [termux.com](https://termux.com/)
 
