@@ -136,7 +136,7 @@ def test_close_shunt(tmp_path):
     factory.reset()
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue([], fifo_file)
+    test_q = JobQueue(config.COMMANDS, fifo_file)
     AnalogInputs.initialize()
     gate = Gate(test_q)
 
@@ -152,7 +152,7 @@ def test_close_shunt(tmp_path):
     time_taken = time.monotonic()-start
     assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     # Check that the gate is set to reopen immediately
-    assert gate.current_state == "opening"
+    assert test_q.get_nonblocking() == 'open'
     test_q.cleanup()
     del test_q
 
@@ -171,7 +171,7 @@ def test_normal_close_shunt(tmp_path):
     config.MIN_TIME_TO_OPEN_CLOSE = 0
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue([], fifo_file)
+    test_q = JobQueue(config.COMMANDS, fifo_file)
     AnalogInputs.initialize()
     gate = Gate(test_q)
 
@@ -188,6 +188,7 @@ def test_normal_close_shunt(tmp_path):
     assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
     # Check that the gate is in the closed state
     assert gate.current_state == "closed"
+    assert test_q.empty()
     test_q.cleanup()
     del test_q
 

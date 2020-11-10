@@ -141,7 +141,6 @@ pytest
 
 ## To-do list
 ### Phase 1
-* Collision detection on closing (Immediately reopen)
 * Bug - Changing from lock_open to normal mode doesn't close the gate
 
 ### Phase 2

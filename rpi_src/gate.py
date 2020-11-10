@@ -142,7 +142,7 @@ class Gate:
                     # It can be assumed that the gate has hit something closing,
                     logger.warning("Gate has hit something whilst closing")
                     logger.debug("Reopening gate due to hit")
-                    self.current_state = "opening"
+                    self.job_q.validate_and_put('open')
                     return
                 self.current_state = "closed"
                 logger.debug("Gate closed")
@@ -157,7 +157,8 @@ class Gate:
             job = self.job_q.get_nonblocking()
             if job == "open":
                 self._stop()
-                self.current_state = "opening"
+                self.current_state = "stopped"
+                self.job_q.validate_and_put('open')
                 return
 
     def _stop(self):
