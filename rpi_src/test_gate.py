@@ -128,7 +128,7 @@ def test_open_shunt(tmp_path):
 
 
 def test_close_shunt(tmp_path):
-    """ Test to ensure the gate stops if it hits something on closing
+    """ Test to ensure the gate stops and reopens if it hits something on closing
     """
     # Setup mock pins
     factory = MockFactory()
@@ -151,6 +151,43 @@ def test_close_shunt(tmp_path):
     # Check the gate stopped immediately
     time_taken = time.monotonic()-start
     assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
+    # Check that the gate is set to reopen immediately
+    assert gate.current_state == "opening"
+    test_q.cleanup()
+    del test_q
+
+
+def test_normal_close_shunt(tmp_path):
+    """ Test to ensure the gate stops when it hits something withing the expected timeframe
+    """
+    # Setup mock pins
+    factory = MockFactory()
+    Device.pin_factory = factory
+    factory.reset()
+
+    # Set the expected, min and max times to open
+    config.EXPECTED_TIME_TO_OPEN_CLOSE = 1
+    config.MAX_TIME_TO_OPEN_CLOSE = 2
+    config.MIN_TIME_TO_OPEN_CLOSE = 0
+
+    fifo_file = os.path.join(str(tmp_path), 'pipe')
+    test_q = JobQueue([], fifo_file)
+    AnalogInputs.initialize()
+    gate = Gate(test_q)
+
+    # Setup shunt voltage as a high value
+    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    start = time.monotonic()
+    gate.close()
+
+    # Check the gate stopped
+    assert gate.motor_pin0.value == 0
+    assert gate.motor_pin1.value == 0
+    # Check the gate stopped immediately
+    time_taken = time.monotonic()-start
+    assert time_taken == pytest.approx(config.SHUNT_READ_DELAY, 0.1)
+    # Check that the gate is in the closed state
+    assert gate.current_state == "closed"
     test_q.cleanup()
     del test_q
 
