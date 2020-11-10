@@ -118,7 +118,7 @@ source venv/bin/activate
 
 Install the python requirements
 ```bash
-pip install -r requirements.txt
+pip install .[dev]
 ```
 
 ### Usage
