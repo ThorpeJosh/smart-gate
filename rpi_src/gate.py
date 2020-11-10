@@ -128,6 +128,7 @@ class Gate:
         self.current_state = "closing"
         start_time = time.monotonic()
         security_time = start_time + config.MAX_TIME_TO_OPEN_CLOSE
+        hit_time = start_time + config.MIN_TIME_TO_OPEN_CLOSE
         self._close()
         time.sleep(config.SHUNT_READ_DELAY)
         while True:
@@ -136,6 +137,13 @@ class Gate:
             if shunt_voltage > config.SHUNT_THRESHOLD:
                 logger.debug('Shunt threshold exceeded: %s', shunt_voltage)
                 self._stop()
+                # Check if gate hit object or is closed
+                if time.monotonic() < hit_time:
+                    # It can be assumed that the gate has hit something closing,
+                    logger.warning("Gate has hit something whilst closing")
+                    logger.debug("Reopening gate due to hit")
+                    self.current_state = "opening"
+                    return
                 self.current_state = "closed"
                 logger.debug("Gate closed")
                 return
