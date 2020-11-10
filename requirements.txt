@@ -1,7 +1,0 @@
-pyserial
-pylint==2.5.3
-pytest
-pathlib
-schedule
-gpiozero
-jsonschema
