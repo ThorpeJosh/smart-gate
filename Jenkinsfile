@@ -12,7 +12,7 @@ pipeline {
                         sh '''
                         virtualenv venv -p python3
                         . venv/bin/activate
-                        pip install -r requirements.txt
+                        pip install .[dev]
                         '''
                     }
                 }
@@ -37,7 +37,7 @@ pipeline {
             steps{
                 sh'''
                 . venv/bin/activate
-                pytest
+                tox
                 '''
             }
         }
