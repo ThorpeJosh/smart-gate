@@ -14,12 +14,14 @@ sudo apt-get install -y \
 if [ -f venv/bin/activate ]
 then
     source venv/bin/activate
-    pip install -r requirements.txt
+    pip install --upgrade pip
+    pip install .
 else
     echo setting up virtual environment
     virtualenv venv -p python3
     source venv/bin/activate
-    pip install -r requirements.txt
+    pip install --upgrade pip
+    pip install .
 fi
 
 # Compile and upload arduino code
