@@ -293,7 +293,7 @@ def test_button_callback():
         pin_obj.drive_high()
         assert pin_obj.state == 1
         # Check job queue has job
-        assert job_q.get_nonblocking() == 'open'
+        assert job_q.get(timeout=2) == 'open'
 
     # Cleanup
     job_q.cleanup()
