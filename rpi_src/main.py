@@ -106,6 +106,7 @@ if __name__ == '__main__':
                 lock_open_loop(gate, job_q)
             else:
                 logger.critical("Unexpected mode: %s", gate.current_mode)
+                raise ValueError("Unexpected Mode")
     # Catch and log any unexpected exception before program exits
     except Exception as exception:  # pylint: disable=broad-except
         logger.critical('Critical Exception: %s', exception)
