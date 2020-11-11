@@ -42,7 +42,9 @@ queue_handler = logging.handlers.QueueHandler(log_q)
 logger.addHandler(queue_handler)
 
 # Listen for log messages on log_q and forward them to the file, stream and email handlers
-log_listener = logging.handlers.QueueListener(log_q, file_handler, stream_handler, email_handler)
+log_listener = logging.handlers.QueueListener(log_q,
+                                              file_handler, stream_handler, email_handler,
+                                              respect_handler_level=True)
 log_listener.start()
 
 
