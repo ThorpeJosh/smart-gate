@@ -249,9 +249,9 @@ def test_setup_button_pins(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
-    job_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
+    test_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     AnalogInputs.initialize()
-    _ = Gate(job_q)
+    _ = Gate(test_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
@@ -267,7 +267,8 @@ def test_setup_button_pins(tmp_path):
         assert pin_obj.state == 1
 
     # Cleanup
-    job_q.cleanup()
+    test_q.cleanup()
+    del test_q
 
 
 def test_button_callback():
@@ -277,23 +278,25 @@ def test_button_callback():
     factory = MockFactory()
     Device.pin_factory = factory
     factory.reset()
-    job_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInputs.initialize()
-    _ = Gate(job_q)
+    test_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
+    AnalogInputs.initialize(test_q)
+    gate = Gate(test_q)
 
     for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
         pin_obj = Device.pin_factory.pin(pin)
         # Check job queue is empty
-        assert job_q.get_nonblocking() is None
+        assert gate.job_q.get_nonblocking() is None
         # Press button
+        assert pin_obj.state == 1
         pin_obj.drive_low()
         assert pin_obj.state == 0
         time.sleep(0.2)
         pin_obj.drive_high()
         assert pin_obj.state == 1
+        time.sleep(0.2)
         # Check job queue has job
-        assert job_q.get(timeout=2) == 'open'
+        assert gate.job_q.get(timeout=5) == 'open'
 
     # Cleanup
-    job_q.cleanup()
-    del job_q
+    test_q.cleanup()
+    del test_q
