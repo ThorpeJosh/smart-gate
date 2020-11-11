@@ -12,8 +12,7 @@ from serial_analog import AnalogInputs
 from gate import Gate
 from job_queue import JobQueue
 
-logger = logging.getLogger(__name__)
-
+logging.disable(level=logging.CRITICAL)
 
 def test_motor_pins(tmp_path):
     """ Testing open method

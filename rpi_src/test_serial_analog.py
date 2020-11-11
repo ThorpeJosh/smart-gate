@@ -1,6 +1,7 @@
 """ Test module to ensure the arduino mock interface is working correctly
 """
 import time
+import logging
 from serial_analog import AnalogInputs
 
 
@@ -9,6 +10,7 @@ def test_setup_lock(caplog):
     initialize() gets run exactly once before any pins are initialized
     else it should raise an exception
     """
+    logging.disable(logging.NOTSET)
     AnalogInputs.initialize()
 
     # Sleep to wait for logs from previous tests threads that are still shutting down
@@ -21,6 +23,8 @@ def test_setup_lock(caplog):
     assert "Handshake has already been initiated" in caplog.text
     # Reset setup lock
     AnalogInputs.handshake_lock = False
+
+    logging.disable(level=logging.CRITICAL)
 
 
 def test_mock_input():
