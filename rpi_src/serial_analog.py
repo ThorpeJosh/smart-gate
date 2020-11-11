@@ -44,14 +44,15 @@ Arduino will not be able to trigger the gate opening")
             cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
             cls.ser.flush()
             # Start the serial thread
+            cls.handshake()
             threading.Thread(target=cls.read_serial, daemon=True).start()
         except serial.serialutil.SerialException as error:
             logger.warning("Serial device not found: %s", error)
             logger.info("Entering mock analog mode")
             cls.mock_mode = True
             cls.mock_voltages = [0] * cls.number_of_inputs
+            cls.handshake()
         cls.arduino_queue = queue.Queue()
-        cls.handshake()
 
     @classmethod
     def get(cls, index="all"):
