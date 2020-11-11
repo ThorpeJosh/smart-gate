@@ -2,6 +2,7 @@
 """
 import logging
 import logging.handlers
+from queue import Queue
 
 # Smart gate module imports
 import config
@@ -19,13 +20,11 @@ logger.setLevel(logging.DEBUG)
 file_handler = logging.handlers.TimedRotatingFileHandler(config.GATE_LOG, when='W0', backupCount=50)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-logger.addHandler(file_handler)
 
 # Log to stdout as well
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 stream_handler.setLevel(logging.DEBUG)
-logger.addHandler(stream_handler)
 
 # Log to email
 email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT),
@@ -36,7 +35,15 @@ email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT)
                                              secure=())
 email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 email_handler.setLevel(logging.WARNING)
-logger.addHandler(email_handler)
+
+# Log everything to a Queue to avoid each handler from blocking (especially email handler)
+log_q = Queue()
+queue_handler = logging.handlers.QueueHandler(log_q)
+logger.addHandler(queue_handler)
+
+# Listen for log messages on log_q and forward them to the file, stream and email handlers
+log_listener = logging.handlers.QueueListener(log_q, file_handler, stream_handler, email_handler)
+log_listener.start()
 
 
 def main_loop():
@@ -105,3 +112,4 @@ if __name__ == '__main__':
     finally:
         logger.debug('running cleanup')
         job_q.cleanup()
+        log_listener.stop()
