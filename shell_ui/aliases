@@ -1,7 +1,8 @@
 ##smart-gate begin
-alias help="printf 'smart-gate options:\nhelp - gives this menu\no - opens the gate\nh - home mode\na - away mode\nlo - lock open\nlc - lock closed\ngcm - get current mode\nggl - get gate logs\ngdl - get debug logs\ngbl - get battery logs\ngbv - get current battery voltage\n'"
+alias help="printf 'smart-gate options:\nhelp - gives this menu\no - opens the gate\nh - home mode\na - away mode\nlo - lock open\nlc - lock closed\ngcm - get current mode\nggl - get gate logs\ngdl - get debug logs\ntdl - tail debug logs\ngbl - get battery logs\ngbv - get current battery voltage\n'"
 alias ggl="ssh pi@$ip 'cat gate.log | grep -v DEBUG'"
 alias gdl="ssh pi@$ip 'cat gate.log'"
+alias tdl="ssh pi@$ip 'tail gate.log -f'"
 alias gcm="ssh pi@$ip 'cat saved_mode.txt'"
 alias gbl="ssh pi@$ip 'cat battery_voltage.log'"
 alias gbv="ssh pi@$ip 'echo log_battery > pipe; sleep 0.5; tail gate.log -n1'"
