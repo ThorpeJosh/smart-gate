@@ -183,7 +183,7 @@ pytest
 
 ## To-do list
 ### Phase 1
-* Bug - Changing from lock_open to normal mode doesn't close the gate
+* Completed
 
 ### Phase 2
 * Capture picture of vehicle when button is pressed
