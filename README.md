@@ -10,7 +10,6 @@ Since the RPi has no analog pins, an Arduino UNO is used for all the analog inpu
 When an update is deployed the RPi will compile and upload the new arduino code to the Arduino via the USB.
 
 This project was initially designed around a specific application, but could be easily forked and applied to different motorised gate applications or contributions to the project that help generalise it are welcome.
-All the pin numbers and configurable parameters reside in the rpi_src/config.py file to allow easy configuration for different applications.
 
 ## Wiring
 ![Screenshot](https://github.com/ThorpeJosh/smart-gate/blob/master/reference/smart_gate_schematics.png?raw=true)
@@ -40,8 +39,51 @@ Gate has 3 modes it can operate in
   * Permanently Open - Gate opens and stays there until mode is changed
   * Permanently Closed - Gate closes and stays there until mode is changed
 
-## Email Alerts
-To enable email alerts, an email config must exist at ~/.email_keys.json following the following format:
+## Configuration
+All the configurable values and parameters (such as pins used, tunables and secret keys) can be found in:
+```bash
+~/.config/smart-gate/conf.ini
+```
+This directory and conf.ini file will be created when the program is launched for the first time. Then change the default values as needed.
+A sample of the conf.ini file is as follows:
+```ini
+[raspberry_pins]
+# first pin of the motor
+motor_pin_0 = 23
+# second pin of the motor
+motor_pin_1 = 24
+# pin for the button on outside of the gate
+button_outside = 27
+# pin for the button on inside of the gate
+button_inside = 22
+# optional pin for debugging or mounted on control box
+button_debug = 17
+
+[arduino_pins]
+# analog pin connected to the current shunt
+shunt = 0
+# analog pin connected to the 24vdc battery voltage divider
+battery_voltage = 5
+
+[parameters]
+# minimum time to hold the gate open for, pushing a button when the gate is open will start this countdown again (seconds)
+hold_open_time = 10
+# expected time for gate to open/close, used to determine if something has gone wrong like hitting a car or a faulty motor (seconds)
+expected_time_to_open_close = 23
+# voltage threshold across shunt for the gate hitting an object (volts)
+shunt_threshold = 0.03
+# delay before reading shunt voltage, due to motor startup current spike (seconds)
+shunt_read_delay = 0.5
+# correction factor for battery voltage input. gets multiplied to the arduinos voltage reading on the battery voltage pin
+battery_voltage_correction_factor = 10.7
+
+[keys]
+# secret key to use for 433mhz radio, if being used. must be 8 characters
+radio_key = 8CharSec
+```
+
+## Email Alerts (Optional)
+To enable email alerts, an email config must exist at ~/.config/smart-gate/email_keys.json following the following format:
 ```json
 {
     "smtp": "gate_smpt_email_server",
@@ -57,16 +99,16 @@ To enable email alerts, an email config must exist at ~/.email_keys.json followi
 ```
 
 ## 433MHz Radio Control (Optional)
-The gate can be opened with cheap 433MHz radios when a receiver is fitted to the Arduino. See the wiring diagram for the how to wire the receiver, and code to program the transmitters can be found in arduino_src/TransmitterSketch/TransmitterSketch.ino\
+The gate can be opened with cheap 433MHz radios when a receiver is fitted to the Arduino. See the wiring diagram for the how to wire the receiver, and code to program the transmitters can be found in arduino_src/TransmitterSketch/TransmitterSketch.ino
 
-The 8 character secret for the Arduino to listen for, must be saved in a file on the RPi at ~/.radio_key\
+The 8 character secret for the Arduino to listen for, must be set in ~/.conf/smart-gate/conf.ini\
 The RPi will automatically send this key to the Arduino when the serial handshake is completed.
 
 ## Termux UI (Android)
 The gate can be controlled via ssh from any computer or mobile.\
 For a simple alias based ui, see shell_ui/aliases, and consider appending this file to your bashrc.  
 
-To install or update a Termux UI for android devices:\
+To install or update a Termux UI for android devices:
 * Set your smart-gate RPi up with a static ip on a local network or vpn
 * Dowload Termux app on your android, Info at [termux.com](https://termux.com/)
 * Install open-ssh in Termux and setup ssh-keys with the RPi server

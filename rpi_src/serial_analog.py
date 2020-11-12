@@ -147,18 +147,13 @@ Arduino will not be able to trigger the gate opening")
                 elif data == 'R':
                     # Arduino is requesting the 433MHz radio secret key
                     try:
-                        with open(config.RADIO_KEY_FILE, "r") as radio_key_file:
-                            key = radio_key_file.read()
-                            key = key.strip().replace("\n", "")
-                            logger.debug("Read radio key from file: %s", key)
-                            if len(key) != 8:
-                                raise ValueError
-                            logger.debug("Sending radio secret key to Arduino")
-                            cls.ser.write(key.encode())
-                    except FileNotFoundError:
-                        logger.warning("Arduino has requested secret key but %s does not exist",
-                                       config.RADIO_KEY_FILE)
-                        cls.ser.write(('x'*10).encode())
+                        key = config.RADIO_KEY
+                        key = key.strip().replace("\n", "")
+                        logger.debug("Read radio key from file: %s", key)
+                        if len(key) != 8:
+                            raise ValueError
+                        logger.debug("Sending radio secret key to Arduino")
+                        cls.ser.write(key.encode())
                     except ValueError:
                         logger.warning("Radio key is not 8 characters long")
                         cls.ser.write(('x'*10).encode())

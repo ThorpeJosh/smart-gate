@@ -1,35 +1,103 @@
-"""Module to store all configurable values and variables.
+"""Module to store create or read from a configuration file and parse the values and variables to
+globals for other modules to access.
 """
 import json
 import logging
 import os
+import configparser
 from pathlib import Path
 
 from jsonschema import validate
 
 logger = logging.getLogger("root")
 
-# Board Pin numbers
-MOTORPIN0 = 23
-MOTORPIN1 = 24
 
-BUTTON_OUTSIDE_PIN = 27
-BUTTON_INSIDE_PIN = 22
-BUTTON_BOX_PIN = 17
+def read_write_config(config_location):
+    """Function to read the config file or create one if it doesn't exist"""
+    config = configparser.ConfigParser(allow_no_value=True)
+    # Write config template to file if it doesn't already exist
+    if not os.path.exists(config_location):
+        logger.info("No config file was found, creating one at: %s", config_location)
+        config["raspberry_pins"] = {
+            "# First pin of the motor": None,
+            "motor_pin_0": "23",
+            "# Second pin of the motor": None,
+            "motor_pin_1": "24",
+            "# Pin for the button on outside of the gate": None,
+            "button_outside": "27",
+            "# Pin for the button on inside of the gate": None,
+            "button_inside": "22",
+            "# Optional pin for debugging or mounted on control box": None,
+            "button_debug": "17",
+        }
+
+        config["arduino_pins"] = {
+            "# Analog pin connected to the current shunt": None,
+            "shunt": "0",
+            "# Analog pin connected to the 24VDC battery voltage divider": None,
+            "battery_voltage": "5",
+        }
+
+        config["parameters"] = {
+            "# Minimum time to hold the gate open for, pushing a button when the gate is open will "
+            "start this countdown again (seconds)": None,
+            "hold_open_time": "10",
+            "# Expected time for gate to open/close, used to determine if something has gone wrong"
+            ", like hitting a car or a fault with the motor (seconds)": None,
+            "expected_time_to_open_close": "23",
+            "# Voltage threshold across shunt for the gate hitting an object (volts)": None,
+            "shunt_threshold": "0.03",
+            "# Delay before reading shunt voltage, due to motor startup current spike (seconds)"
+            : None,
+            "shunt_read_delay": "0.5",
+            "# Correction factor for battery voltage input. Gets multiplied to the arduinos "
+            "voltage reading on the battery voltage pin": None,
+            "battery_voltage_correction_factor": "10.7",
+        }
+
+        config["keys"] = {
+            "# Secret key to use for 433MHz radio, if being used. Must be 8 characters": None,
+            "radio_key": "8CharSec",
+        }
+
+        path = os.path.split(config_location)[0]
+        os.makedirs(path, exist_ok=True)
+        with open(config_location, "w") as config_file:
+            config.write(config_file)
+
+    # Read the config file
+    logger.debug("Reading config file at: %s", config_location)
+    input_config = configparser.ConfigParser()
+    input_config.read(config_location)
+    return input_config
+
+
+# Read from config file
+CONFIG_PATH = os.path.join(str(Path.home()), ".config/smart-gate/")
+CONFIG = read_write_config(os.path.join(CONFIG_PATH, "conf.ini"))
+
+# Board Pin numbers
+MOTORPIN0 = CONFIG.getint("raspberry_pins", "motor_pin_0")
+MOTORPIN1 = CONFIG.getint("raspberry_pins", "motor_pin_1")
+
+BUTTON_OUTSIDE_PIN = CONFIG.getint("raspberry_pins", "button_outside")
+BUTTON_INSIDE_PIN = CONFIG.getint("raspberry_pins", "button_inside")
+BUTTON_BOX_PIN = CONFIG.getint("raspberry_pins", "button_debug")
 
 # Arduino analog pins
-SHUNT_PIN = 0
-BATTERY_VOLTAGE_PIN = 5
+SHUNT_PIN = CONFIG.getint("arduino_pins", "shunt")
+BATTERY_VOLTAGE_PIN = CONFIG.getint("arduino_pins", "battery_voltage")
 
-# Parameters (time in seconds unless stated otherwise)
-SHUNT_THRESHOLD = 0.04  # Volts. Shunt is 0.01R
-SHUNT_READ_DELAY = 0.5
-EXPECTED_TIME_TO_OPEN_CLOSE = 23
+# Parameters
+SHUNT_THRESHOLD = CONFIG.getfloat("parameters", "shunt_threshold")
+SHUNT_READ_DELAY = CONFIG.getfloat("parameters", "shunt_read_delay")
+EXPECTED_TIME_TO_OPEN_CLOSE = CONFIG.getint("parameters", "expected_time_to_open_close")
 MAX_TIME_TO_OPEN_CLOSE = EXPECTED_TIME_TO_OPEN_CLOSE * 1.2
 MIN_TIME_TO_OPEN_CLOSE = EXPECTED_TIME_TO_OPEN_CLOSE * 0.8
-HOLD_OPEN_TIME = 10
-
-BATTERY_VOLTAGE_CORRECTION_FACTOR = 10.7  # 10k 1k voltage divider
+HOLD_OPEN_TIME = CONFIG.getint("parameters", "hold_open_time")
+BATTERY_VOLTAGE_CORRECTION_FACTOR = CONFIG.getfloat(
+    "parameters", "battery_voltage_correction_factor"
+)
 
 # Commands that the gate needs to be able to handle on the job queue
 COMMANDS = ["open", "close"]
@@ -46,14 +114,14 @@ GATE_LOG = os.path.join(str(Path.home()), "gate.log")
 FIFO_FILE = os.path.join(str(Path.home()), "pipe")
 
 # Store gate mode incase of restart
-SAVED_MODE_FILE = os.path.join(str(Path.home()), "saved_mode.txt")
+SAVED_MODE_FILE = os.path.join(CONFIG_PATH, "saved_mode.txt")
 
-# 8 Character passwork that 433MHz arduino receiver is looking for, if 433MHz receiver is used
-RADIO_KEY_FILE = os.path.join(str(Path.home()), ".radio_key")
+# 8 Character password that 433MHz arduino receiver is looking for, if 433MHz receiver is used
+RADIO_KEY = CONFIG.get("keys", "radio_key")
 
 # Load email config json
 try:
-    EMAIL_KEY_JSON = os.path.join(str(Path.home()), ".email_keys.json")
+    EMAIL_KEY_JSON = os.path.join(CONFIG_PATH, "email_keys.json")
     with open(EMAIL_KEY_JSON, "r") as json_file:
         json_data = json.load(json_file)
     SMTP = json_data["smtp"]
