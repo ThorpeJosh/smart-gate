@@ -7,6 +7,8 @@ Serial communication contract as follows:
 
 Handshake:
     Arduino sends 'A', RPi responds with 'A'
+Button Pin Negotiation:
+    Arduino sends 'B', RPi sends integers for each button pin, then 'B' when it's finished.
 Analog Voltages:
     RPi sends 'V', Arduino responds with 'V' followed by voltages[] and then a checksum
 Gate Trigger:
@@ -29,6 +31,11 @@ byte incomingByte;
 uint8_t secretKey[lengthOfRadioKey]; 
 uint8_t secretKeyLen = sizeof(secretKey);
 
+// Button pins are given by RPi, presume less than 10 buttons will be used
+int buttonPins[10] = {0};
+unsigned long lastButtonPress = 0;
+unsigned long debounceDelay = 500;
+
 RH_ASK rf_driver;
 
 void setup()
@@ -42,7 +49,18 @@ void setup()
     rf_driver.init();
     // Get the radio receiver secret key from the RPi
     getRadioKey();
+    // Get button pins and initialize them
+    getButtonPins();
+    for (int i=0; i<10; i++)
+    {
+        if (buttonPins[i] > 0)
+        {
+            pinMode(buttonPins[i], INPUT);
+            digitalWrite(buttonPins[i], HIGH);
+        }
+    }
 }
+
 
 void loop()
 {
@@ -65,6 +83,14 @@ void loop()
         {
             Serial.println('O'); // Send capital 'O' to rpi to open the gate
             Serial.println("Radio received correct passphrase");
+        }
+    }
+    // Check if buttons have been pressed
+    if ((millis() - lastButtonPress) > debounceDelay)
+    {
+        if (checkButtons())
+        {
+            lastButtonPress = millis();
         }
     }
 }
@@ -152,6 +178,54 @@ void getRadioKey()
             delay(1000);
         }
         secretKey[i] = Serial.read();
+    }
+}
+
+
+void getButtonPins()
+{
+    // Send an 'B' to request the button pins
+    flushSerialInputBuffer();
+    Serial.println('B');
+    bool finished_flag = false;
+    int button_no = 0;
+    
+    while (!finished_flag)
+    {
+        Serial.println("Getting button pins");
+        // Wait for serial packets
+        while (Serial.available() <= 0)
+        {
+            Serial.println("waiting for next char");
+            delay(1000);
+        }
+        incomingByte = Serial.read();
+        if (incomingByte == 'B')
+        {
+            finished_flag = true;
+        }
+        buttonPins[button_no] = int(incomingByte);
+        button_no++;
+    }
+}
+
+
+bool checkButtons()
+{
+    bool pressed;
+    for (int i=0; i<10; i++)
+    {
+        if (buttonPins[i] > 0)
+        {
+            pressed = !digitalRead(i);
+            if (pressed)
+            {
+                // Button has been pressed, send capital "O"
+                Serial.println("O");
+                // Send the pin number to RPi
+                Serial.println(buttonPins[i]);
+            }
+        }
     }
 }
 
