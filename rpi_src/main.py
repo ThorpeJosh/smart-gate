@@ -88,6 +88,9 @@ def lock_open_loop(_gate, queue):
     while _gate.current_mode == 'lock_open':
         job = queue.get()
         if job in config.MODES:
+            # If exiting lock_open into a normal mode, then cycle gate to ensure it closes.
+            if job.startswith('normal'):
+                queue.validate_and_put('open')
             _gate.mode_change(job)
 
 
