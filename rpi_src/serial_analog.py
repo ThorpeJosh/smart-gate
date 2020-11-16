@@ -115,9 +115,6 @@ Arduino will not be able to trigger the gate opening")
         """ Indefinite serial reading
         This is done with a blocking command to reduce cpu usage.
         """
-        # pylint: disable=too-many-nested-blocks
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         while True:
             # Catch serial errors
             try:
@@ -125,73 +122,16 @@ Arduino will not be able to trigger the gate opening")
                 data = cls.ser.readline().decode("ascii").rstrip()
                 cls.arduino_logger.debug(data)
                 if data == 'V':
-                    # Remove serial timeout so it doesn't hang in here
-                    cls.ser.timeout = 0
-                    # Arduino is sending analog voltages, collect and put on queue
-                    voltages = [cls.ser.readline().decode("ascii").rstrip()
-                                for _ in range(cls.number_of_inputs)]
-                    checksum = cls.ser.readline().decode("ascii").rstrip()
-                    try:
-                        # Check that the voltages are valid floats
-                        voltages = [float(voltage) for voltage in voltages]
-                        checksum = float(checksum)
-                        # Check that the voltage checksum matches the data received
-                        if round(sum(voltages), cls.precision) == checksum:
-                            for voltage in voltages:
-                                cls.arduino_queue.put(voltage)
-                        else:
-                            raise ValueError("Sum of voltages {} does not match checksum {}".format(
-                                sum(voltages), checksum))
-                    except ValueError as err:
-                        logger.warning(err)
-                        time.sleep(0.001)
-                        cls.ser.flushInput()
-                        logger.debug("Requesting another set of voltages from Arduino")
-                        cls.ser.write("V".encode())
+                    # Arduino is sending analog voltages
+                    cls._arduino_receive_voltages()
 
                 elif data == 'O':
                     # Arduino has requested the gate to open
-                    message = cls.ser.readline().decode("ascii").rstrip()
-                    logger.debug("Arduino: %s", message)
-                    # Check what button triggered the arduino and send email if in away mode
-                    try:
-                        pin = int(message)
-                        if pin == config.BUTTON_OUTSIDE_PIN:
-                            if cls.gate.current_mode.endswith("away"):
-                                logger.warning("Outside button pressed")
-                            else:
-                                logger.info("Outside button pressed")
-                        elif pin == config.BUTTON_INSIDE_PIN:
-                            if cls.gate.current_mode.endswith("away"):
-                                logger.warning("Inside button pressed")
-                            else:
-                                logger.info("Inside button pressed")
-                        elif pin == config.BUTTON_BOX_PIN:
-                            if cls.gate.current_mode.endswith("away"):
-                                logger.warning("Box button pressed")
-                            else:
-                                logger.info("Box button pressed")
-                        else:
-                            logger.warning("Unknown button pressed")
-                        cls.job_q.validate_and_put('open')
-                    except AttributeError:
-                        logger.debug("Arduino tried to open gate, but didn't have access to queue")
-                    except ValueError:
-                        logger.debug("Arduino did not supply a valid pin value, likely the 433MHz")
+                    cls._arduino_receive_trigger()
 
                 elif data == 'R':
                     # Arduino is requesting the 433MHz radio secret key
-                    try:
-                        key = config.RADIO_KEY
-                        key = key.strip().replace("\n", "")
-                        logger.debug("Read radio key from file: %s", key)
-                        if len(key) != 8:
-                            raise ValueError
-                        logger.debug("Sending radio secret key to Arduino")
-                        cls.ser.write(key.encode())
-                    except ValueError:
-                        logger.warning("Radio key is not 8 characters long")
-                        cls.ser.write(('x'*10).encode())
+                    cls._arduino_requesting_radiokey()
 
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
