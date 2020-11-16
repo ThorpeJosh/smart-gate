@@ -23,12 +23,6 @@ def read_write_config(config_location):
             "motor_pin_0": "23",
             "# Second pin of the motor": None,
             "motor_pin_1": "24",
-            "# Pin for the button on outside of the gate": None,
-            "button_outside": "27",
-            "# Pin for the button on inside of the gate": None,
-            "button_inside": "22",
-            "# Optional pin for debugging or mounted on control box": None,
-            "button_debug": "17",
         }
 
         config["arduino_pins"] = {
@@ -36,6 +30,12 @@ def read_write_config(config_location):
             "shunt": "0",
             "# Analog pin connected to the 24VDC battery voltage divider": None,
             "battery_voltage": "5",
+            "# Pin for the button on outside of the gate": None,
+            "button_outside": "7",
+            "# Pin for the button on inside of the gate": None,
+            "button_inside": "4",
+            "# Optional pin for debugging or mounted on control box": None,
+            "button_debug": "2",
         }
 
         config["parameters"] = {
@@ -76,13 +76,14 @@ def read_write_config(config_location):
 CONFIG_PATH = os.path.join(str(Path.home()), ".config/smart-gate/")
 CONFIG = read_write_config(os.path.join(CONFIG_PATH, "conf.ini"))
 
-# Board Pin numbers
+# Motor Pins
 MOTORPIN0 = CONFIG.getint("raspberry_pins", "motor_pin_0")
 MOTORPIN1 = CONFIG.getint("raspberry_pins", "motor_pin_1")
 
-BUTTON_OUTSIDE_PIN = CONFIG.getint("raspberry_pins", "button_outside")
-BUTTON_INSIDE_PIN = CONFIG.getint("raspberry_pins", "button_inside")
-BUTTON_BOX_PIN = CONFIG.getint("raspberry_pins", "button_debug")
+# Button Pins
+BUTTON_OUTSIDE_PIN = CONFIG.getint("arduino_pins", "button_outside")
+BUTTON_INSIDE_PIN = CONFIG.getint("arduino_pins", "button_inside")
+BUTTON_BOX_PIN = CONFIG.getint("arduino_pins", "button_debug")
 
 # Arduino analog pins
 SHUNT_PIN = CONFIG.getint("arduino_pins", "shunt")
@@ -109,6 +110,9 @@ BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), "battery_voltage.log")
 
 # Gate Log
 GATE_LOG = os.path.join(str(Path.home()), "gate.log")
+
+# Arduino Log
+ARDUINO_LOG = os.path.join(str(Path.home()), "arduino.log")
 
 # Named pipe
 FIFO_FILE = os.path.join(str(Path.home()), "pipe")

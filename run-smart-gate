@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 # Smart gate run script
 VALID_USER="pi"
 
