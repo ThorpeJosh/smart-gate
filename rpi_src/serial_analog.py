@@ -120,18 +120,24 @@ Arduino will not be able to trigger the gate opening")
             try:
                 cls.ser.timeout = 1
                 data = cls.ser.readline().decode("ascii").rstrip()
-                cls.arduino_logger.debug(data)
                 if data == 'V':
                     # Arduino is sending analog voltages
                     cls._arduino_receive_voltages()
 
                 elif data == 'O':
                     # Arduino has requested the gate to open
+                    cls.arduino_logger.debug(data)
                     cls._arduino_receive_trigger()
 
                 elif data == 'R':
                     # Arduino is requesting the 433MHz radio secret key
+                    cls.arduino_logger.debug(data)
                     cls._arduino_requesting_radiokey()
+
+                elif data == 'B':
+                    # Arduino is requesting the button pins
+                    cls.arduino_logger.debug(data)
+                    cls._arduino_requesting_buttons()
 
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
@@ -226,4 +232,4 @@ Arduino will not be able to trigger the gate opening")
             cls.ser.write(str(pin).encode())
         logger.debug("Finished sending button pins to Arduino")
         # Arduino expects to get a "B" back when all button pins are sent
-        cls.ser.write("B")
+        cls.ser.write("B".encode())
