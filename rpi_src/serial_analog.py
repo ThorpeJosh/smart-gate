@@ -117,11 +117,13 @@ Arduino will not be able to trigger the gate opening")
         """
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         while True:
             # Catch serial errors
             try:
                 cls.ser.timeout = 1
                 data = cls.ser.readline().decode("ascii").rstrip()
+                cls.arduino_logger.debug(data)
                 if data == 'V':
                     # Remove serial timeout so it doesn't hang in here
                     cls.ser.timeout = 0
@@ -151,10 +153,31 @@ Arduino will not be able to trigger the gate opening")
                     # Arduino has requested the gate to open
                     message = cls.ser.readline().decode("ascii").rstrip()
                     logger.debug("Arduino: %s", message)
+                    # Check what button triggered the arduino and send email if in away mode
                     try:
+                        pin = int(message)
+                        if pin == config.BUTTON_OUTSIDE_PIN:
+                            if cls.gate.current_mode.endswith("away"):
+                                logger.warning("Outside button pressed")
+                            else:
+                                logger.info("Outside button pressed")
+                        elif pin == config.BUTTON_INSIDE_PIN:
+                            if cls.gate.current_mode.endswith("away"):
+                                logger.warning("Inside button pressed")
+                            else:
+                                logger.info("Inside button pressed")
+                        elif pin == config.BUTTON_BOX_PIN:
+                            if cls.gate.current_mode.endswith("away"):
+                                logger.warning("Box button pressed")
+                            else:
+                                logger.info("Box button pressed")
+                        else:
+                            logger.warning("Unknown button pressed")
                         cls.job_q.validate_and_put('open')
                     except AttributeError:
                         logger.debug("Arduino tried to open gate, but didn't have access to queue")
+                    except ValueError:
+                        logger.debug("Arduino did not supply a valid pin value, likely the 433MHz")
 
                 elif data == 'R':
                     # Arduino is requesting the 433MHz radio secret key
