@@ -239,33 +239,3 @@ def test_mode_changing(tmp_path):
     # Cleanup
     test_q.cleanup()
     del test_q
-
-
-def test_setup_button_pins(tmp_path):
-    """ Test that the button pins are setup correctly
-    """
-    # Setup mock pins
-    factory = MockFactory()
-    Device.pin_factory = factory
-    factory.reset()
-    fifo_file = os.path.join(str(tmp_path), 'pipe')
-    test_q = JobQueue(config.COMMANDS+config.MODES, fifo_file)
-    AnalogInputs.initialize()
-    _ = Gate(test_q)
-
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        # Check pin is infact an input pin
-        assert pin_obj.function == 'input'
-        # Check pin number is correct
-        assert pin_obj.number == pin
-        # Check pull up resistor is enabled
-        assert pin_obj.pull == 'up'
-        # Check debounce is enabled
-        assert pin_obj.bounce == 0.1
-        # Check that the pin value is high due to pull up resistor
-        assert pin_obj.state == 1
-
-    # Cleanup
-    test_q.cleanup()
-    del test_q
