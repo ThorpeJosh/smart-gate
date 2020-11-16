@@ -110,6 +110,9 @@ BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), "battery_voltage.log")
 # Gate Log
 GATE_LOG = os.path.join(str(Path.home()), "gate.log")
 
+# Arduino Log
+ARDUINO_LOG = os.path.join(str(Path.home()), "arduino.log")
+
 # Named pipe
 FIFO_FILE = os.path.join(str(Path.home()), "pipe")
 

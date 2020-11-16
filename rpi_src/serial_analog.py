@@ -23,11 +23,23 @@ class AnalogInputs:
     """
 
     @classmethod
-    def initialize(cls, job_q=None):
+    def initialize(cls, gate=None, job_q=None):
         """ Method similar to __init__ but it does not make sense for any instances to be created
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
         """
+        cls.gate = gate
+
+        # Create a class rotating file logger for all arduino messages
+        cls.arduino_logger = logging.getLogger(__name__)
+        cls.arduino_logger.setLevel(logging.INFO)
+        file_handler = logging.handlers.TimedRotatingFileHandler(
+            config.ARDUINO_LOG, when="W0", backupCount=50
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(logging.Formatter("%(asctime)s : %(message)s"))
+        cls.arduino_logger.addHandler(file_handler)
+
         # Number of analog channels on the arduino
         cls.number_of_inputs = 6
         # Voltage decimal places
@@ -161,3 +173,94 @@ Arduino will not be able to trigger the gate opening")
             except serial.serialutil.SerialException as err:
                 logger.critical('Shutting down gate due to serial error %s', err)
                 return
+
+    @classmethod
+    def _arduino_receive_voltages(cls):
+        """ Arduino is sending analog voltages through. Receive them and perform a
+        checksum to ensure they all came through successfully
+        """
+        # Remove serial timeout so it doesn't hang in here
+        cls.ser.timeout = 0
+        # Arduino is sending analog voltages, collect and put on queue
+        voltages = [cls.ser.readline().decode("ascii").rstrip()
+                    for _ in range(cls.number_of_inputs)]
+        checksum = cls.ser.readline().decode("ascii").rstrip()
+        try:
+            # Check that the voltages are valid floats
+            voltages = [float(voltage) for voltage in voltages]
+            checksum = float(checksum)
+            # Check that the voltage checksum matches the data received
+            if round(sum(voltages), cls.precision) == checksum:
+                for voltage in voltages:
+                    cls.arduino_queue.put(voltage)
+            else:
+                raise ValueError("Sum of voltages {} does not match checksum {}".format(
+                    sum(voltages), checksum))
+        except ValueError as err:
+            logger.warning(err)
+            time.sleep(0.001)
+            cls.ser.flushInput()
+            logger.debug("Requesting another set of voltages from Arduino")
+            cls.ser.write("V".encode())
+        cls.ser.timeout = 1
+
+    @classmethod
+    def _arduino_receive_trigger(cls):
+        """ Arduino has sent a request to open the gate. This method handles the serial and
+        logging of either the button or 433MHz radio that triggered the Arduino.
+        """
+        message = cls.ser.readline().decode("ascii").rstrip()
+        logger.debug("Arduino: %s", message)
+        cls.arduino_logger.debug(message)
+        # Check what button triggered the arduino and send email if in away mode
+        try:
+            pin = int(message)
+            if pin == config.BUTTON_OUTSIDE_PIN:
+                if cls.gate.current_mode.endswith("away"):
+                    logger.warning("Outside button pressed")
+                else:
+                    logger.info("Outside button pressed")
+            elif pin == config.BUTTON_INSIDE_PIN:
+                if cls.gate.current_mode.endswith("away"):
+                    logger.warning("Inside button pressed")
+                else:
+                    logger.info("Inside button pressed")
+            elif pin == config.BUTTON_BOX_PIN:
+                if cls.gate.current_mode.endswith("away"):
+                    logger.warning("Box button pressed")
+                else:
+                    logger.info("Box button pressed")
+            else:
+                logger.warning("Unknown button pressed")
+            cls.job_q.validate_and_put('open')
+        except AttributeError:
+            logger.debug("Arduino tried to open gate, but didn't have access to queue")
+        except ValueError:
+            logger.debug("Arduino did not supply a valid pin value, likely the 433MHz")
+
+    @classmethod
+    def _arduino_requesting_radiokey(cls):
+        """ Arduino is requesting radiokey for 433MHz, if a key exists then send it through"""
+        try:
+            key = config.RADIO_KEY
+            key = key.strip().replace("\n", "")
+            logger.debug("Read radio key from config: %s", key)
+            if len(key) != 8:
+                raise ValueError
+            logger.debug("Sending radio secret key to Arduino")
+            cls.ser.write(key.encode())
+        except ValueError:
+            logger.warning("Radio key is not 8 characters long, please revise for radio operation")
+            cls.ser.write(('x'*10).encode())
+
+    @classmethod
+    def _arduino_requesting_buttons(cls):
+        """ Arduino is requesting input button pin numbers"""
+        logger.debug("Sending button pins to Arduino")
+        for pin in [config.BUTTON_OUTSIDE_PIN,
+                    config.BUTTON_INSIDE_PIN,
+                    config.BUTTON_BOX_PIN]:
+            cls.ser.write(str(pin).encode())
+        logger.debug("Finished sending button pins to Arduino")
+        # Arduino expects to get a "B" back when all button pins are sent
+        cls.ser.write("B")
