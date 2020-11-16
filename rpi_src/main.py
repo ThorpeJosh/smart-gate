@@ -12,41 +12,40 @@ from gate import Gate
 from job_queue import JobQueue
 
 # Create root logger
-LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
+#LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
 logger = logging.getLogger('root')
-logger.setLevel(logging.DEBUG)
-
-# Log to file, rotate logs every Monday
-file_handler = logging.handlers.TimedRotatingFileHandler(config.GATE_LOG, when='W0', backupCount=50)
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-
-# Log to stdout as well
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-stream_handler.setLevel(logging.DEBUG)
-
-# Log to email
-email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT),
-                                             fromaddr=config.FROMADDR,
-                                             toaddrs=config.TOADDRS,
-                                             subject=config.SUBJECT,
-                                             credentials=(config.USER_ID, config.USER_KEY),
-                                             secure=())
-email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-email_handler.setLevel(logging.WARNING)
-
-# Log everything to a Queue to avoid each handler from blocking (especially email handler)
-log_q = Queue()
-queue_handler = logging.handlers.QueueHandler(log_q)
-logger.addHandler(queue_handler)
-
-# Listen for log messages on log_q and forward them to the file, stream and email handlers
-log_listener = logging.handlers.QueueListener(log_q,
-                                              file_handler, stream_handler, email_handler,
-                                              respect_handler_level=True)
-log_listener.start()
-
+#logger.setLevel(logging.DEBUG)
+#
+## Log to file, rotate logs every Monday
+#file_handler = logging.handlers.TimedRotatingFileHandler(config.GATE_LOG, when='W0', backupCount=50)
+#file_handler.setLevel(logging.DEBUG)
+#file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+#
+## Log to stdout as well
+#stream_handler = logging.StreamHandler()
+#stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+#stream_handler.setLevel(logging.DEBUG)
+#
+## Log to email
+#email_handler = logging.handlers.SMTPHandler(mailhost=(config.SMTP, config.PORT),
+#                                             fromaddr=config.FROMADDR,
+#                                             toaddrs=config.TOADDRS,
+#                                             subject=config.SUBJECT,
+#                                             credentials=(config.USER_ID, config.USER_KEY),
+#                                             secure=())
+#email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+#email_handler.setLevel(logging.WARNING)
+#
+## Log everything to a Queue to avoid each handler from blocking (especially email handler)
+#log_q = Queue()
+#queue_handler = logging.handlers.QueueHandler(log_q)
+#logger.addHandler(queue_handler)
+#
+## Listen for log messages on log_q and forward them to the file, stream and email handlers
+#log_listener = logging.handlers.QueueListener(log_q,
+#                                              file_handler, stream_handler, email_handler,
+#                                              respect_handler_level=True)
+#log_listener.start()
 
 def main_loop():
     """Loop for the normal operation mode

@@ -4,13 +4,97 @@ globals for other modules to access.
 import json
 import logging
 import os
+from queue import Queue
 import configparser
 from pathlib import Path
 
 from jsonschema import validate
 
-logger = logging.getLogger("root")
+# Conf path
+CONFIG_PATH = os.path.join(str(Path.home()), ".config/smart-gate/")
 
+# Battery Log
+BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), "battery_voltage.log")
+
+# Gate Log
+GATE_LOG = os.path.join(str(Path.home()), "gate.log")
+
+# Arduino Log
+ARDUINO_LOG = os.path.join(str(Path.home()), "arduino.log")
+
+# Create root logger
+LOG_FORMAT = '%(levelname)s %(asctime)s : %(message)s'
+logger = logging.getLogger('root')
+logger.setLevel(logging.DEBUG)
+
+# Log to file, rotate logs every Monday
+file_handler = logging.handlers.TimedRotatingFileHandler(GATE_LOG, when='W0', backupCount=50)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+# Log to stdout as well
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+stream_handler.setLevel(logging.DEBUG)
+
+# Load email config json
+try:
+    EMAIL_KEY_JSON = os.path.join(CONFIG_PATH, "email_keys.json")
+    with open(EMAIL_KEY_JSON, "r") as json_file:
+        json_data = json.load(json_file)
+    SMTP = json_data["smtp"]
+    PORT = json_data["port"]
+    FROMADDR = json_data["fromaddr"]
+    TOADDRS = json_data["toaddrs"]
+    SUBJECT = json_data["subject"]
+    USER_ID = json_data["credentials"]["id"]
+    USER_KEY = json_data["credentials"]["key"]
+
+    JSON_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "smtp": {"type": "string"},
+            "port": {"type": "number"},
+            "fromaddr": {"type": "string"},
+            "toaddrs": {"type": "array", "minItems": 1},
+            "subject": {"type": "string"},
+            "credentials": {
+                "type": "object",
+                "properties": {"id": {"type": "string"}, "key": {"type": "string"}},
+            },
+        },
+    }
+    validate(instance=json_data, schema=JSON_SCHEMA)
+except FileNotFoundError:
+    logger.warning("No email config json found")
+    SMTP = None
+    PORT = None
+    FROMADDR = None
+    TOADDRS = None
+    SUBJECT = None
+    USER_ID = None
+    USER_KEY = None
+
+# Log to email
+email_handler = logging.handlers.SMTPHandler(mailhost=(SMTP, PORT),
+                                             fromaddr=FROMADDR,
+                                             toaddrs=TOADDRS,
+                                             subject=SUBJECT,
+                                             credentials=(USER_ID, USER_KEY),
+                                             secure=())
+email_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+email_handler.setLevel(logging.WARNING)
+
+# Log everything to a Queue to avoid each handler from blocking (especially email handler)
+log_q = Queue()
+queue_handler = logging.handlers.QueueHandler(log_q)
+logger.addHandler(queue_handler)
+
+# Listen for log messages on log_q and forward them to the file, stream and email handlers
+log_listener = logging.handlers.QueueListener(log_q,
+                                              file_handler, stream_handler, email_handler,
+                                              respect_handler_level=True)
+log_listener.start()
 
 def read_write_config(config_location):
     """Function to read the config file or create one if it doesn't exist"""
@@ -73,7 +157,6 @@ def read_write_config(config_location):
 
 
 # Read from config file
-CONFIG_PATH = os.path.join(str(Path.home()), ".config/smart-gate/")
 CONFIG = read_write_config(os.path.join(CONFIG_PATH, "conf.ini"))
 
 # Motor Pins
@@ -105,15 +188,6 @@ COMMANDS = ["open", "close"]
 # Valid modes for gate operation (First mode is default incase case of error on start up)
 MODES = ["normal_home", "normal_away", "lock_closed", "lock_open"]
 
-# Battery Log
-BATTERY_VOLTAGE_LOG = os.path.join(str(Path.home()), "battery_voltage.log")
-
-# Gate Log
-GATE_LOG = os.path.join(str(Path.home()), "gate.log")
-
-# Arduino Log
-ARDUINO_LOG = os.path.join(str(Path.home()), "arduino.log")
-
 # Named pipe
 FIFO_FILE = os.path.join(str(Path.home()), "pipe")
 
@@ -123,40 +197,3 @@ SAVED_MODE_FILE = os.path.join(CONFIG_PATH, "saved_mode.txt")
 # 8 Character password that 433MHz arduino receiver is looking for, if 433MHz receiver is used
 RADIO_KEY = CONFIG.get("keys", "radio_key")
 
-# Load email config json
-try:
-    EMAIL_KEY_JSON = os.path.join(CONFIG_PATH, "email_keys.json")
-    with open(EMAIL_KEY_JSON, "r") as json_file:
-        json_data = json.load(json_file)
-    SMTP = json_data["smtp"]
-    PORT = json_data["port"]
-    FROMADDR = json_data["fromaddr"]
-    TOADDRS = json_data["toaddrs"]
-    SUBJECT = json_data["subject"]
-    USER_ID = json_data["credentials"]["id"]
-    USER_KEY = json_data["credentials"]["key"]
-
-    JSON_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "smtp": {"type": "string"},
-            "port": {"type": "number"},
-            "fromaddr": {"type": "string"},
-            "toaddrs": {"type": "array", "minItems": 1},
-            "subject": {"type": "string"},
-            "credentials": {
-                "type": "object",
-                "properties": {"id": {"type": "string"}, "key": {"type": "string"}},
-            },
-        },
-    }
-    validate(instance=json_data, schema=JSON_SCHEMA)
-except FileNotFoundError:
-    logger.warning("No email config json found")
-    SMTP = None
-    PORT = None
-    FROMADDR = None
-    TOADDRS = None
-    SUBJECT = None
-    USER_ID = None
-    USER_KEY = None
