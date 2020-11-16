@@ -269,34 +269,3 @@ def test_setup_button_pins(tmp_path):
     # Cleanup
     test_q.cleanup()
     del test_q
-
-
-def test_button_callback():
-    """Test that when the button is pushed that the callback puts a job on the queue
-    """
-    # Setup mock pins
-    factory = MockFactory()
-    Device.pin_factory = factory
-    factory.reset()
-    test_q = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInputs.initialize(test_q)
-    gate = Gate(test_q)
-
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        # Check job queue is empty
-        assert gate.job_q.get_nonblocking() is None
-        # Press button
-        assert pin_obj.state == 1
-        pin_obj.drive_low()
-        assert pin_obj.state == 0
-        time.sleep(0.2)
-        pin_obj.drive_high()
-        assert pin_obj.state == 1
-        time.sleep(0.2)
-        # Check job queue has job
-        assert gate.job_q.get(timeout=5) == 'open'
-
-    # Cleanup
-    test_q.cleanup()
-    del test_q
