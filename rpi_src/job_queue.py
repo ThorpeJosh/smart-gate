@@ -5,7 +5,7 @@ import os
 import queue
 import subprocess
 import threading
-import config
+from config import Config as config
 from battery_voltage_log import BatteryVoltageLog
 from serial_analog import AnalogInputs
 

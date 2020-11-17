@@ -6,7 +6,7 @@ import time
 
 import schedule
 
-import config
+from config import Config as config
 from serial_analog import AnalogInputs
 
 # Hide schedule logging messages

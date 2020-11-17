@@ -3,7 +3,7 @@
 import logging
 
 # Smart gate module imports
-import config
+from config import Config as config
 from serial_analog import AnalogInputs
 from battery_voltage_log import BatteryVoltageLog
 from gate import Gate
@@ -81,4 +81,4 @@ if __name__ == '__main__':
     finally:
         logger.debug('running cleanup')
         job_q.cleanup()
-        log_listener.stop()
+        config.log_listener.stop()
