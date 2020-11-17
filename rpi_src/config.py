@@ -214,7 +214,7 @@ class Config:
                 "wrong, like hitting a car or a fault with the motor (seconds)": None,
                 "expected_time_to_open_close": "23",
                 "# Voltage threshold across shunt for the gate hitting an object (volts)": None,
-                "shunt_threshold": "0.03",
+                "shunt_threshold": "0.04",
                 "# Delay before reading shunt voltage, due to motor startup current spike (seconds)"
                 : None,
                 "shunt_read_delay": "0.5",
