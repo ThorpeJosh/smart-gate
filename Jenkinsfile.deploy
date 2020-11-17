@@ -9,6 +9,7 @@ pipeline {
                         sh '''
                         virtualenv venv -p python3
                         . venv/bin/activate
+                        export READTHEDOCS=True # picamera requirement
                         pip install .[dev]
                         '''
                     }
