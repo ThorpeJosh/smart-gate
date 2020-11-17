@@ -199,9 +199,9 @@ class Config:
                 "# Analog pin connected to the 24VDC battery voltage divider": None,
                 "battery_voltage": "5",
                 "# Pin for the button on outside of the gate": None,
-                "button_outside": "7",
+                "button_outside": "4",
                 "# Pin for the button on inside of the gate": None,
-                "button_inside": "4",
+                "button_inside": "7",
                 "# Optional pin for debugging or mounted on control box": None,
                 "button_debug": "2",
             }
