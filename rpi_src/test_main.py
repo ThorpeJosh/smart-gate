@@ -26,46 +26,6 @@ def delayed_put(delay, message, queue):
     queue.validate_and_put(message)
 
 
-def test_email_in_button_callback(caplog):
-    """ Test that the log level is raised enough to send emails if gate is in away mode
-    """
-    # Setup mock pins
-    factory = MockFactory()
-    Device.pin_factory = factory
-    factory.reset()
-    test_queue = JobQueue(config.COMMANDS+config.MODES, 'test_button_pipe')
-    AnalogInputs.initialize()
-    gate = Gate(test_queue)
-
-    # Ensure no emails will be sent
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        caplog.clear()
-        # Press button
-        pin_obj.drive_low()
-        time.sleep(0.2)
-        pin_obj.drive_high()
-        # Check log message level
-        for record in caplog.records:
-            assert record.levelno < main.email_handler.level
-
-    # Ensure emails will be sent
-    gate.current_mode = 'normal_away'
-    for pin in [config.BUTTON_OUTSIDE_PIN, config.BUTTON_INSIDE_PIN, config.BUTTON_BOX_PIN]:
-        pin_obj = Device.pin_factory.pin(pin)
-        caplog.clear()
-        # Press button
-        pin_obj.drive_low()
-        time.sleep(0.2)
-        pin_obj.drive_high()
-        # Check log message level
-        for record in caplog.records:
-            assert record.levelno >= main.email_handler.level
-
-    #Cleanup
-    test_queue.cleanup()
-
-
 def test_lock_open_loop(tmp_path):
     """ Test for lock_open mode loop, to ensure it does not exit until another mode is selected
     """
