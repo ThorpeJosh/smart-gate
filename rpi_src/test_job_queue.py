@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 
-import config
+from config import Config as config
 from job_queue import JobQueue
 
 

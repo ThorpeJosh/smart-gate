@@ -1,6 +1,6 @@
 """Unit Tests for the config module
 """
-import config
+from config import Config as config
 
 GPIO_PINS = [config.MOTORPIN0,
              config.MOTORPIN1,

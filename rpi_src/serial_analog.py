@@ -5,7 +5,7 @@ import time
 import queue
 import threading
 import serial
-import config
+from config import Config as config
 
 logger = logging.getLogger("root")
 

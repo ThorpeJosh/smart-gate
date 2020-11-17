@@ -7,7 +7,7 @@ import pytest
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory
 
-import config
+from config import Config as config
 from serial_analog import AnalogInputs
 from gate import Gate
 from job_queue import JobQueue

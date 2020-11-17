@@ -5,7 +5,7 @@ import time
 
 import gpiozero
 
-import config
+from config import Config as config
 from serial_analog import AnalogInputs
 
 logger = logging.getLogger("root")
