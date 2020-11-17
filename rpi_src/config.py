@@ -229,6 +229,23 @@ class Config:
                 "lower_battery_voltage_alert": "24.5",
             }
 
+            config["camera"] = {
+                "# Enables the camera to record vehicles when a button is pressed": None,
+                "enable": "yes",
+                "# Save location for any pictures or videos": None,
+                "save_path": os.path.join(str(Path.home()), "gate_media"),
+                "# Resolution for any pictures to be captured at": None,
+                "horizontal_picture_resolution": "2592",
+                "vertical_picture_resolution": "1944",
+                "# Resolution for any video to be captured at": None,
+                "horizontal_video_resolution": "1920",
+                "vertical_video_resolution": "1080",
+                "# If camera is mounted on a servo, it will pivot to these angles before taking a "
+                "picture (0-180 degrees)": None,
+                "inside_button_angle": "0",
+                "outside_button_angle": "180",
+            }
+
             config["keys"] = {
                 "# Secret key to use for 433MHz radio, if being used. Must be 8 characters": None,
                 "radio_key": "8CharSec",
