@@ -18,6 +18,7 @@ Gate Trigger:
 #include <RH_ASK.h>
 #include <SPI.h>
 #include <QuickMedianLib.h>
+#include <Servo.h>
 
 // Configurable Parameters 
 const int noOfAnalogPins = 6;
@@ -32,6 +33,11 @@ byte incomingByte;
 uint8_t secretKey[lengthOfRadioKey]; 
 uint8_t secretKeyLen = sizeof(secretKey);
 
+// Servo
+Servo servo;
+byte servoPos;
+const int servoPin = 9;
+
 // Button pins are given by RPi, presume less than 10 buttons will be used
 int buttonPins[10] = {0};
 unsigned long lastButtonPress = 0;
@@ -43,6 +49,7 @@ void setup()
 {
     // Use external analog reference and put a jumper between pins 3.3V and AREF
     analogReference(EXTERNAL);
+    servo.attach(servoPin);
     // start serial at 115200bps
     Serial.begin(115200);
     serialHandshake();
@@ -68,13 +75,18 @@ void setup()
 
 void loop()
 {
-    // Read analog pins and send data if requested over serial
     if (Serial.available() > 0)
     {
         incomingByte = Serial.read();
-        if(incomingByte == 'V')
+        if (incomingByte == 'V')
         {
+            // Read analog pins and send data if requested over serial
             sendAnalogVoltages();
+        }
+        else if (incomingByte == 'S')
+        {
+            // RPi is sending a servo position update
+            updateServo();
         }
     }
     // Check if radio message has been received
@@ -107,6 +119,21 @@ void flushSerialInputBuffer()
     {
         Serial.read();
     }
+}
+
+void updateServo()
+{
+    // Wait until we recieve new byte
+    while (Serial.available() <= 0)
+    {
+        Serial.println("Waiting for servo position");
+        delay(100);
+    }
+    servoPos = Serial.read();
+    Serial.print("Sending servo to position: ");
+    Serial.println(servoPos);
+
+    servo.write(servoPos);
 }
 
 void sendAnalogVoltages()
