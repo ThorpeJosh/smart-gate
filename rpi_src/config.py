@@ -94,6 +94,17 @@ class Config:
         # 8 Character password that the arduino 433MHz is looking for, if 433MHz receiver is used
         cls.RADIO_KEY = config.get("keys", "radio_key")
 
+        # Camera parameters
+        cls.CAMERA_ENABLED = config.getboolean("camera", "enable")
+        cls.CAMERA_SAVE_PATH = config.get("camera", "save_path")
+        cls.PICTURE_RESOLUTION = (config.getint("camera", "horizontal_picture_resolution"),
+                                  config.getint("camera", "vertical_picture_resolution"))
+        cls.VIDEO_RESOLUTION = (config.getint("camera", "horizontal_video_resolution"),
+                                config.getint("camera", "vertical_video_resolution"))
+        cls.CAMERA_INSIDE_ANGLE = config.getint("camera", "inside_button_angle")
+        cls.CAMERA_OUTSIDE_ANGLE = config.getint("camera", "outside_button_angle")
+        os.makedirs(cls.CAMERA_SAVE_PATH, exist_ok=True)
+
     @classmethod
     def root_logger(cls):
         """ Creates the root logger that every other module will use.
