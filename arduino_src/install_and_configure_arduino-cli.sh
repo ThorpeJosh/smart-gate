@@ -12,6 +12,9 @@ arduino-cli core update-index
 # Install core for Arduino Uno
 arduino-cli core install arduino:avr
 
+# Install 3rd party arduino libraries
+arduino-cli lib install QuickMedianLib
+
 # Get RadioHead arduino library
 mkdir -p ~/Arduino/libraries/
 cd ~/Arduino/libraries/
