@@ -199,9 +199,9 @@ class Config:
                 "# Analog pin connected to the 24VDC battery voltage divider": None,
                 "battery_voltage": "5",
                 "# Pin for the button on outside of the gate": None,
-                "button_outside": "4",
+                "button_outside": "7",
                 "# Pin for the button on inside of the gate": None,
-                "button_inside": "7",
+                "button_inside": "4",
                 "# Optional pin for debugging or mounted on control box": None,
                 "button_debug": "2",
             }
@@ -214,7 +214,7 @@ class Config:
                 "wrong, like hitting a car or a fault with the motor (seconds)": None,
                 "expected_time_to_open_close": "23",
                 "# Voltage threshold across shunt for the gate hitting an object (volts)": None,
-                "shunt_threshold": "0.04",
+                "shunt_threshold": "0.004",
                 "# Delay before reading shunt voltage, due to motor startup current spike (seconds)"
                 : None,
                 "shunt_read_delay": "0.5",
