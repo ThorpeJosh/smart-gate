@@ -17,6 +17,7 @@ Gate Trigger:
 */
 #include <RH_ASK.h>
 #include <SPI.h>
+#include <QuickMedianLib.h>
 
 // Configurable Parameters 
 const int noOfAnalogPins = 6;
@@ -122,28 +123,31 @@ void sendAnalogVoltages()
 void updateAnalogVoltages()
 {
     // Update the global voltages array
-    int smoothSamples = 20;
-
-    // Set all Analog values to zero
-    for(int i=0; i<noOfAnalogPins; i++)
-    {
-        voltages[i] = 0.0;
-    }
-
-    // Get mean of analog readings
-    for(int s=0; s<smoothSamples; s++)
+    
+    // Take multiple readings and then apply median
+    int noSamples = 21;
+    int analogVals[noOfAnalogPins][noSamples];
+    
+    // Take samples over noSamples*delay() seconds
+    for(int s=0; s<noSamples; s++)
     {
         for(int i=0; i<noOfAnalogPins; i++)
         {
-            voltages[i] += analogRead(i);
+            analogVals[i][s] = analogRead(i);
         }
         delay(1);
     }
 
-    // Divide by number of samples to get the mean, then multiply by 3.3/1023 to get voltage
+    // Get median for each pin
     for(int i=0; i<noOfAnalogPins; i++)
     {
-        voltages[i] = (voltages[i] / smoothSamples) * (3.3 / 1023.0);
+        voltages[i] = float(QuickMedian<int>::GetMedian(&analogVals[i][0], noSamples));
+    }
+
+    // Multiply by 3.3/1023 to get voltage
+    for(int i=0; i<noOfAnalogPins; i++)
+    {
+        voltages[i] = (voltages[i]) * (3.3 / 1023.0);
     }
 
     // Calculate the checksum
@@ -154,7 +158,6 @@ void updateAnalogVoltages()
         checksum += round(voltages[i]*float(pow(10, voltageDecimalPlaces)))/float(pow(10, voltageDecimalPlaces));
     }
 }
-
 
 void serialHandshake()
 {
@@ -245,11 +248,26 @@ void getButtonPins()
 bool checkButtons()
 {
     bool pressed;
+    int noSamples = 100;
     for (int i=0; i<10; i++)
     {
         if (buttonPins[i] > 0)
         {
             pressed = !digitalRead(buttonPins[i]);
+            // Check to ensure that this wasn't a false positive
+            if (pressed)
+            {
+                for (int j=0; j<noSamples; j++)
+                {
+                    if (digitalRead(buttonPins[i]))
+                    {
+                        // Button is no longer pressed, ignore initial press
+                        pressed = false;
+                        break;
+                    }
+                    delay(1);
+                }
+            }
             if (pressed)
             {
                 // Button has been pressed, send capital "O"
