@@ -255,8 +255,8 @@ class Config:
                 "vertical_video_resolution": "1080",
                 "# If camera is mounted on a servo, it will pivot to these angles before taking a "
                 "picture (0-180 degrees)": None,
-                "inside_button_angle": "0",
-                "outside_button_angle": "180",
+                "inside_button_angle": "10",
+                "outside_button_angle": "170",
             }
 
             config["keys"] = {
