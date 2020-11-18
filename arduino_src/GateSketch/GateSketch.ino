@@ -15,7 +15,6 @@ Gate Trigger:
     Arduino sends 'O', followed by a trigger message, RPi doesn't respond.
 
 */
-#include <RH_ASK.h>
 #include <SPI.h>
 #include <QuickMedianLib.h>
 #include <Servo.h>
@@ -30,8 +29,6 @@ const int lengthOfRadioKey = 8; //Length of expected secret key to receive over 
 float voltages[noOfAnalogPins];
 float checksum;
 byte incomingByte;
-uint8_t secretKey[lengthOfRadioKey]; 
-uint8_t secretKeyLen = sizeof(secretKey);
 
 // Servo
 Servo servo;
@@ -43,7 +40,6 @@ int buttonPins[10] = {0};
 unsigned long lastButtonPress = 0;
 unsigned long debounceDelay = 1000;
 
-RH_ASK rf_driver;
 
 void setup()
 {
@@ -66,10 +62,6 @@ void setup()
             pinMode(buttonPins[i], INPUT_PULLUP);
         }
     }
-    // Initialize the ASK receiver
-    rf_driver.init();
-    // Get the radio receiver secret key from the RPi
-    getRadioKey();
 }
 
 
@@ -87,18 +79,6 @@ void loop()
         {
             // RPi is sending a servo position update
             updateServo();
-        }
-    }
-    // Check if radio message has been received
-    // Set buffer to size of expected message
-    uint8_t buf[lengthOfRadioKey];
-    uint8_t bufLen = sizeof(buf);
-    if (rf_driver.recv(buf, &bufLen))
-    {
-        if (compareKeys(&secretKey[0], &buf[0], lengthOfRadioKey))
-        {
-            Serial.println('O'); // Send capital 'O' to rpi to open the gate
-            Serial.println("Radio received correct passphrase");
         }
     }
     // Check if buttons have been pressed
@@ -197,41 +177,6 @@ void serialHandshake()
     flushSerialInputBuffer();
 }
 
-
-void getRadioKey()
-{
-    // Send an 'R' to request the secret key
-    flushSerialInputBuffer();
-    Serial.println('R');
-    int i=0;
-    while (i<lengthOfRadioKey)
-    {
-        Serial.println("Getting key char");
-        // Wait for serial packets
-        while (Serial.available() <= 0)
-        {
-            Serial.println("waiting for next char");
-            delay(1000);
-        }
-        incomingByte = Serial.read();
-        // Check byte is a valid character
-        if (incomingByte < '0')
-        {
-            continue;
-        }
-        else
-        {
-            secretKey[i] = incomingByte;
-            i++;
-        }
-        
-    }
-    Serial.print("Received the radio key: ");
-    for(int i=0; i<lengthOfRadioKey; i++){Serial.print(char(secretKey[i]));}
-    Serial.println();
-}
-
-
 void getButtonPins()
 {
     // Send an 'B' to request the button pins
@@ -306,21 +251,4 @@ bool checkButtons()
         }
     }
     return pressed;
-}
-
-
-bool compareKeys(uint8_t key1[], uint8_t key2[], int keys_length)
-{
-    for (int i=0; i<keys_length; i++)
-    {
-        if (key1[i] == key2[i])
-        {
-            continue;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return true;
 }
