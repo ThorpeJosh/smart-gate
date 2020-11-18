@@ -74,7 +74,6 @@ void loop()
         incomingByte = Serial.read();
         if(incomingByte == 'V')
         {
-            Serial.println("ST");
             sendAnalogVoltages();
         }
     }
@@ -249,11 +248,26 @@ void getButtonPins()
 bool checkButtons()
 {
     bool pressed;
+    int noSamples = 100;
     for (int i=0; i<10; i++)
     {
         if (buttonPins[i] > 0)
         {
             pressed = !digitalRead(buttonPins[i]);
+            // Check to ensure that this wasn't a false positive
+            if (pressed)
+            {
+                for (int j=0; j<noSamples; j++)
+                {
+                    if (digitalRead(buttonPins[i]))
+                    {
+                        // Button is no longer pressed, ignore initial press
+                        pressed = false;
+                        break;
+                    }
+                    delay(1);
+                }
+            }
             if (pressed)
             {
                 // Button has been pressed, send capital "O"
