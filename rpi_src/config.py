@@ -103,6 +103,8 @@ class Config:
                                 config.getint("camera", "vertical_video_resolution"))
         cls.CAMERA_INSIDE_ANGLE = config.getint("camera", "inside_button_angle")
         cls.CAMERA_OUTSIDE_ANGLE = config.getint("camera", "outside_button_angle")
+        if not ((0 <= cls.CAMERA_INSIDE_ANGLE <= 180) and (0 <= cls.CAMERA_OUTSIDE_ANGLE <= 180)):
+            raise ValueError("Camera servo angle is not between 0 and 180")
         os.makedirs(cls.CAMERA_SAVE_PATH, exist_ok=True)
 
     @classmethod
