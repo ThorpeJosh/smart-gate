@@ -4,7 +4,7 @@ import logging
 
 # Smart gate module imports
 from config import Config as config
-from serial_analog import AnalogInputs
+from serial_analog import ArduinoInterface
 from battery_voltage_log import BatteryVoltageLog
 from gate import Gate
 from job_queue import JobQueue
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     logger.info('Starting smart gate')
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     gate = Gate(job_q)
-    AnalogInputs.initialize(gate, job_q)
+    ArduinoInterface.initialize(gate, job_q)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()
     try:

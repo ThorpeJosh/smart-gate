@@ -6,7 +6,7 @@ import time
 import gpiozero
 
 from config import Config as config
-from serial_analog import AnalogInputs
+from serial_analog import ArduinoInterface
 
 logger = logging.getLogger("root")
 
@@ -76,7 +76,7 @@ class Gate:
         time.sleep(config.SHUNT_READ_DELAY)
         while True:
             # Check shunt voltage
-            shunt_voltage = AnalogInputs.get(self.shunt_pin)
+            shunt_voltage = ArduinoInterface.get_analog_voltages(self.shunt_pin)
             if shunt_voltage > config.SHUNT_THRESHOLD:
                 logger.debug('Shunt threshold exceeded: %s', shunt_voltage)
                 self._stop()
@@ -133,7 +133,7 @@ class Gate:
         time.sleep(config.SHUNT_READ_DELAY)
         while True:
             # Check shunt voltage
-            shunt_voltage = AnalogInputs.get(self.shunt_pin)
+            shunt_voltage = ArduinoInterface.get_analog_voltages(self.shunt_pin)
             if shunt_voltage > config.SHUNT_THRESHOLD:
                 logger.debug('Shunt threshold exceeded: %s', shunt_voltage)
                 self._stop()

@@ -1,4 +1,4 @@
-""" Module to communicate with Arduino and get analog voltage values
+""" Module to communicate with Arduino
 """
 import logging
 import time
@@ -9,12 +9,12 @@ from config import Config as config
 
 logger = logging.getLogger("root")
 
-class AnalogSerialError(Exception):
+class ArduinoInterfaceError(Exception):
     """ Class of errors to be raised if something goes wrong with the serial ardiuno interface
     """
 
-class AnalogInputs:
-    """ Class to manage the aquisition of analog voltages from an arduino.
+class ArduinoInterface:
+    """ Class to manage the communication with the arduino.
     The arduino is presumed to be plugged into /dev/ttyUSB0 and serial is enabled on the RPi
     The arduino then takes the analog readings and sends them over serial upon recieveing a packet,
     from the RPi
@@ -50,7 +50,7 @@ class AnalogInputs:
         if job_q is not None:
             cls.job_q = job_q
         else:
-            logger.warning("Job Queue was not passed to AnalogInputs,\
+            logger.warning("Job Queue was not passed to ArduinoInterface,\
 Arduino will not be able to trigger the gate opening")
         try:
             cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
@@ -67,7 +67,7 @@ Arduino will not be able to trigger the gate opening")
         cls.arduino_queue = queue.Queue()
 
     @classmethod
-    def get(cls, index="all"):
+    def get_analog_voltages(cls, index="all"):
         """ Get the voltage message from the arduino and return that value specified by index
         index: should be an integer to specify which analog pin value to return
         """
@@ -87,7 +87,8 @@ Arduino will not be able to trigger the gate opening")
                 return voltages
             return voltages[index]
         except queue.Empty:
-            raise AnalogSerialError('Arduino Queue was empty when trying to get voltages')
+            raise ArduinoInterfaceError('Arduino Queue was empty when trying to get voltages') \
+                    from None
 
     @classmethod
     def handshake(cls):
