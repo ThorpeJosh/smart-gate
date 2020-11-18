@@ -8,6 +8,7 @@ from serial_analog import ArduinoInterface
 from battery_voltage_log import BatteryVoltageLog
 from gate import Gate
 from job_queue import JobQueue
+from camera import Camera
 
 logger = logging.getLogger('root')
 
@@ -59,9 +60,10 @@ def lock_open_loop(_gate, queue):
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
+    cam = Camera() if config.CAMERA_ENABLED else None
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     gate = Gate(job_q)
-    ArduinoInterface.initialize(gate, job_q)
+    ArduinoInterface.initialize(gate, job_q, cam)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()
     try:

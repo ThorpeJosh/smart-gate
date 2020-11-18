@@ -23,7 +23,7 @@ class ArduinoInterface:
     """
 
     @classmethod
-    def initialize(cls, gate=None, job_q=None):
+    def initialize(cls, gate=None, job_q=None, cam=None):
         """ Method similar to __init__ but it does not make sense for any instances to be created
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
@@ -65,6 +65,7 @@ Arduino will not be able to trigger the gate opening")
             cls.mock_voltages = [0] * cls.number_of_inputs
             cls.handshake()
         cls.arduino_queue = queue.Queue()
+        cls.camera_queue = cam.camera_q if cam is not None else None
 
     @classmethod
     def get_analog_voltages(cls, index="all"):
@@ -179,6 +180,7 @@ Arduino will not be able to trigger the gate opening")
         """ Arduino has sent a request to open the gate. This method handles the serial and
         logging of either the button or 433MHz radio that triggered the Arduino.
         """
+        # pylint: disable=too-many-branches
         message = cls.ser.readline().decode("ascii").rstrip()
         logger.debug("Arduino: %s", message)
         cls.arduino_logger.debug(message)
@@ -190,11 +192,17 @@ Arduino will not be able to trigger the gate opening")
                     logger.warning("Outside button pressed")
                 else:
                     logger.info("Outside button pressed")
+                # Take picture
+                if cls.camera_queue is not None:
+                    cls.camera_queue.put("outside")
             elif pin == config.BUTTON_INSIDE_PIN:
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Inside button pressed")
                 else:
                     logger.info("Inside button pressed")
+                # Take picture
+                if cls.camera_queue is not None:
+                    cls.camera_queue.put("inside")
             elif pin == config.BUTTON_BOX_PIN:
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Box button pressed")
