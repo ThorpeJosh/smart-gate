@@ -47,9 +47,9 @@ class BatteryVoltageLog:
         """scheduled job
         """
         bat_volt = self.analog_to_battery_voltage(AnalogInputs.get(self.battery_pin))
-        if 24.5 <= bat_volt <= 29.6:
+        if config.BATTERY_LOWER_ALERT <= bat_volt <= config.BATTERY_UPPER_ALERT:
             self.bat_logger.info("%.1fv", bat_volt)
-        elif 24 < bat_volt < 24.5:
+        elif config.BATTERY_LOWER_ALERT-0.5 < bat_volt < config.BATTERY_LOWER_ALERT:
             self.bat_logger.warning("%.1fv", bat_volt)
             root_logger.warning("Battery voltage: %sv", bat_volt)
         else:
