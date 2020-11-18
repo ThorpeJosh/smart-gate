@@ -32,7 +32,7 @@ class AnalogInputs:
 
         # Create a class rotating file logger for all arduino messages
         cls.arduino_logger = logging.getLogger(__name__)
-        cls.arduino_logger.setLevel(logging.INFO)
+        cls.arduino_logger.setLevel(logging.DEBUG)
         file_handler = logging.handlers.TimedRotatingFileHandler(
             config.ARDUINO_LOG, when="W0", backupCount=50
         )
