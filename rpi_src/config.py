@@ -82,6 +82,8 @@ class Config:
         cls.BATTERY_VOLTAGE_CORRECTION_FACTOR = config.getfloat(
             "parameters", "battery_voltage_correction_factor"
         )
+        cls.BATTERY_UPPER_ALERT = config.getfloat("parameters", "upper_battery_voltage_alert")
+        cls.BATTERY_LOWER_ALERT = config.getfloat("parameters", "lower_battery_voltage_alert")
 
         # Commands that the gate needs to be able to handle on the job queue
         cls.COMMANDS = ["open", "close"]
@@ -221,6 +223,10 @@ class Config:
                 "# Correction factor for battery voltage input. Gets multiplied to the arduinos "
                 "voltage reading on the battery voltage pin": None,
                 "battery_voltage_correction_factor": "10.7",
+                "# Thresholds for battery voltage alerts. Email will be sent if voltage is outside "
+                "these values (volts)": None,
+                "upper_battery_voltage_alert": "29.6",
+                "lower_battery_voltage_alert": "24.5",
             }
 
             config["keys"] = {
