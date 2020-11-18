@@ -20,6 +20,7 @@ class Camera():
         # setup camera queue and start a thread to read it and handle the camera
         self.camera_q = queue.Queue()
         threading.Thread(target=self._read_queue, daemon=True).start()
+        logger.debug("Camera class has been initialized")
 
     @staticmethod
     def move_servo(position):
@@ -60,6 +61,7 @@ class Camera():
         """
         while True:
             job = self.camera_q.get()
+            logger.debug("Camera queue: %s", job)
             # Exit thread gracefully with a 'kill' command
             if job == 'kill':
                 logger.warning('received kill command on camera queue')
