@@ -10,6 +10,7 @@ pipeline {
                 stage('Python Environment') {
                     steps {
                         sh '''
+                        rm -rf venv
                         virtualenv venv -p python3
                         . venv/bin/activate
                         export READTHEDOCS=True # picamera requirement
