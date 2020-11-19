@@ -7,12 +7,16 @@ import time
 import logging
 import queue
 import threading
-from picamera import PiCamera
-
 from config import Config as config
 from serial_analog import ArduinoInterface
 
 logger = logging.getLogger('root')
+
+try:
+    from picamera import PiCamera
+except OSError:
+    # Camera module only works on RPi, ensure it is disabled
+    config.CAMERA_ENABLED = False
 
 class Camera():
     """ Class to handle operations of the camera """
