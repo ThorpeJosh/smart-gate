@@ -10,7 +10,7 @@ from gpiozero.pins.mock import MockFactory
 
 from config import Config as config
 import main
-from serial_analog import AnalogInputs
+from serial_analog import ArduinoInterface
 from gate import Gate
 from job_queue import JobQueue
 
@@ -34,7 +34,7 @@ def test_lock_open_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)
@@ -45,7 +45,7 @@ def test_lock_open_loop(tmp_path):
     # Ensure queue is empty to start
     assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
-    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    ArduinoInterface.mock_voltages[config.SHUNT_PIN] = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it
@@ -68,7 +68,7 @@ def test_lock_closed_loop(tmp_path):
     Device.pin_factory = factory
     factory.reset()
     # Setup gate dependencies
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_queue = JobQueue(config.COMMANDS+config.MODES, fifo_file)
     gate = Gate(test_queue)
@@ -79,7 +79,7 @@ def test_lock_closed_loop(tmp_path):
     # Ensure queue is empty to start
     assert test_queue.get_nonblocking() is None
     # Set shunt voltage above threshold to indicate gate already in position
-    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    ArduinoInterface.mock_voltages[config.SHUNT_PIN] = 10
 
     start_time = time.monotonic()
     # put a non mode message on the queue to ensure it ignores it

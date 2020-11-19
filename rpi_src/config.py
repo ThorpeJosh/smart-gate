@@ -94,6 +94,19 @@ class Config:
         # 8 Character password that the arduino 433MHz is looking for, if 433MHz receiver is used
         cls.RADIO_KEY = config.get("keys", "radio_key")
 
+        # Camera parameters
+        cls.CAMERA_ENABLED = config.getboolean("camera", "enable")
+        cls.CAMERA_SAVE_PATH = config.get("camera", "save_path")
+        cls.PICTURE_RESOLUTION = (config.getint("camera", "horizontal_picture_resolution"),
+                                  config.getint("camera", "vertical_picture_resolution"))
+        cls.VIDEO_RESOLUTION = (config.getint("camera", "horizontal_video_resolution"),
+                                config.getint("camera", "vertical_video_resolution"))
+        cls.CAMERA_INSIDE_ANGLE = config.getint("camera", "inside_button_angle")
+        cls.CAMERA_OUTSIDE_ANGLE = config.getint("camera", "outside_button_angle")
+        if not ((0 <= cls.CAMERA_INSIDE_ANGLE <= 180) and (0 <= cls.CAMERA_OUTSIDE_ANGLE <= 180)):
+            raise ValueError("Camera servo angle is not between 0 and 180")
+        os.makedirs(cls.CAMERA_SAVE_PATH, exist_ok=True)
+
     @classmethod
     def root_logger(cls):
         """ Creates the root logger that every other module will use.
@@ -227,6 +240,23 @@ class Config:
                 "these values (volts)": None,
                 "upper_battery_voltage_alert": "29.6",
                 "lower_battery_voltage_alert": "24.5",
+            }
+
+            config["camera"] = {
+                "# Enables the camera to record vehicles when a button is pressed": None,
+                "enable": "yes",
+                "# Save location for any pictures or videos": None,
+                "save_path": os.path.join(str(Path.home()), "gate_media"),
+                "# Resolution for any pictures to be captured at": None,
+                "horizontal_picture_resolution": "2592",
+                "vertical_picture_resolution": "1944",
+                "# Resolution for any video to be captured at": None,
+                "horizontal_video_resolution": "1920",
+                "vertical_video_resolution": "1080",
+                "# If camera is mounted on a servo, it will pivot to these angles before taking a "
+                "picture (0-180 degrees)": None,
+                "inside_button_angle": "10",
+                "outside_button_angle": "170",
             }
 
             config["keys"] = {

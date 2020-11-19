@@ -8,7 +8,7 @@ from gpiozero import Device
 from gpiozero.pins.mock import MockFactory
 
 from config import Config as config
-from serial_analog import AnalogInputs
+from serial_analog import ArduinoInterface
 from gate import Gate
 from job_queue import JobQueue
 
@@ -25,7 +25,7 @@ def test_motor_pins(tmp_path):
     # pylint: disable=protected-access
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
     assert gate.motor_pin0.value == 0
     assert gate.motor_pin1.value == 0
@@ -55,7 +55,7 @@ def test_open_timeout(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -83,7 +83,7 @@ def test_close_timeout(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
 
     start = time.monotonic()
@@ -108,11 +108,11 @@ def test_open_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
-    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    ArduinoInterface.mock_voltages[config.SHUNT_PIN] = 10
     start = time.monotonic()
     gate.open()
 
@@ -136,11 +136,11 @@ def test_close_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
-    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    ArduinoInterface.mock_voltages[config.SHUNT_PIN] = 10
     start = time.monotonic()
     gate.close()
 
@@ -171,11 +171,11 @@ def test_normal_close_shunt(tmp_path):
 
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue(config.COMMANDS, fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
     gate = Gate(test_q)
 
     # Setup shunt voltage as a high value
-    AnalogInputs.mock_voltages[config.SHUNT_PIN] = 10
+    ArduinoInterface.mock_voltages[config.SHUNT_PIN] = 10
     start = time.monotonic()
     gate.close()
 
@@ -209,7 +209,7 @@ def test_mode_changing(tmp_path):
     # Setup gate
     fifo_file = os.path.join(str(tmp_path), 'pipe')
     test_q = JobQueue([], fifo_file)
-    AnalogInputs.initialize()
+    ArduinoInterface.initialize()
 
     # Ensure when no saved mode exists, it defaults to normal-home mode
     gate = Gate(test_q)

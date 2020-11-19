@@ -15,9 +15,9 @@ Gate Trigger:
     Arduino sends 'O', followed by a trigger message, RPi doesn't respond.
 
 */
-#include <RH_ASK.h>
 #include <SPI.h>
 #include <QuickMedianLib.h>
+#include <Servo.h>
 
 // Configurable Parameters 
 const int noOfAnalogPins = 6;
@@ -29,20 +29,23 @@ const int lengthOfRadioKey = 8; //Length of expected secret key to receive over 
 float voltages[noOfAnalogPins];
 float checksum;
 byte incomingByte;
-uint8_t secretKey[lengthOfRadioKey]; 
-uint8_t secretKeyLen = sizeof(secretKey);
+
+// Servo
+Servo servo;
+byte servoPos;
+const int servoPin = 9;
 
 // Button pins are given by RPi, presume less than 10 buttons will be used
 int buttonPins[10] = {0};
 unsigned long lastButtonPress = 0;
 unsigned long debounceDelay = 1000;
 
-RH_ASK rf_driver;
 
 void setup()
 {
     // Use external analog reference and put a jumper between pins 3.3V and AREF
     analogReference(EXTERNAL);
+    servo.attach(servoPin);
     // start serial at 115200bps
     Serial.begin(115200);
     serialHandshake();
@@ -59,34 +62,23 @@ void setup()
             pinMode(buttonPins[i], INPUT_PULLUP);
         }
     }
-    // Initialize the ASK receiver
-    rf_driver.init();
-    // Get the radio receiver secret key from the RPi
-    getRadioKey();
 }
 
 
 void loop()
 {
-    // Read analog pins and send data if requested over serial
     if (Serial.available() > 0)
     {
         incomingByte = Serial.read();
-        if(incomingByte == 'V')
+        if (incomingByte == 'V')
         {
+            // Read analog pins and send data if requested over serial
             sendAnalogVoltages();
         }
-    }
-    // Check if radio message has been received
-    // Set buffer to size of expected message
-    uint8_t buf[lengthOfRadioKey];
-    uint8_t bufLen = sizeof(buf);
-    if (rf_driver.recv(buf, &bufLen))
-    {
-        if (compareKeys(&secretKey[0], &buf[0], lengthOfRadioKey))
+        else if (incomingByte == 'S')
         {
-            Serial.println('O'); // Send capital 'O' to rpi to open the gate
-            Serial.println("Radio received correct passphrase");
+            // RPi is sending a servo position update
+            updateServo();
         }
     }
     // Check if buttons have been pressed
@@ -107,6 +99,21 @@ void flushSerialInputBuffer()
     {
         Serial.read();
     }
+}
+
+void updateServo()
+{
+    // Wait until we recieve new byte
+    while (Serial.available() <= 0)
+    {
+        Serial.println("Waiting for servo position");
+        delay(100);
+    }
+    servoPos = Serial.read();
+    Serial.print("Sending servo to position: ");
+    Serial.println(servoPos);
+
+    servo.write(servoPos);
 }
 
 void sendAnalogVoltages()
@@ -169,41 +176,6 @@ void serialHandshake()
     }
     flushSerialInputBuffer();
 }
-
-
-void getRadioKey()
-{
-    // Send an 'R' to request the secret key
-    flushSerialInputBuffer();
-    Serial.println('R');
-    int i=0;
-    while (i<lengthOfRadioKey)
-    {
-        Serial.println("Getting key char");
-        // Wait for serial packets
-        while (Serial.available() <= 0)
-        {
-            Serial.println("waiting for next char");
-            delay(1000);
-        }
-        incomingByte = Serial.read();
-        // Check byte is a valid character
-        if (incomingByte < '0')
-        {
-            continue;
-        }
-        else
-        {
-            secretKey[i] = incomingByte;
-            i++;
-        }
-        
-    }
-    Serial.print("Received the radio key: ");
-    for(int i=0; i<lengthOfRadioKey; i++){Serial.print(char(secretKey[i]));}
-    Serial.println();
-}
-
 
 void getButtonPins()
 {
@@ -279,21 +251,4 @@ bool checkButtons()
         }
     }
     return pressed;
-}
-
-
-bool compareKeys(uint8_t key1[], uint8_t key2[], int keys_length)
-{
-    for (int i=0; i<keys_length; i++)
-    {
-        if (key1[i] == key2[i])
-        {
-            continue;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return true;
 }

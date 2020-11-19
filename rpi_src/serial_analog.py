@@ -1,4 +1,4 @@
-""" Module to communicate with Arduino and get analog voltage values
+""" Module to communicate with Arduino
 """
 import logging
 import time
@@ -9,12 +9,12 @@ from config import Config as config
 
 logger = logging.getLogger("root")
 
-class AnalogSerialError(Exception):
+class ArduinoInterfaceError(Exception):
     """ Class of errors to be raised if something goes wrong with the serial ardiuno interface
     """
 
-class AnalogInputs:
-    """ Class to manage the aquisition of analog voltages from an arduino.
+class ArduinoInterface:
+    """ Class to manage the communication with the arduino.
     The arduino is presumed to be plugged into /dev/ttyUSB0 and serial is enabled on the RPi
     The arduino then takes the analog readings and sends them over serial upon recieveing a packet,
     from the RPi
@@ -23,7 +23,7 @@ class AnalogInputs:
     """
 
     @classmethod
-    def initialize(cls, gate=None, job_q=None):
+    def initialize(cls, gate=None, job_q=None, cam=None):
         """ Method similar to __init__ but it does not make sense for any instances to be created
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
@@ -50,7 +50,7 @@ class AnalogInputs:
         if job_q is not None:
             cls.job_q = job_q
         else:
-            logger.warning("Job Queue was not passed to AnalogInputs,\
+            logger.warning("Job Queue was not passed to ArduinoInterface,\
 Arduino will not be able to trigger the gate opening")
         try:
             cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
@@ -65,9 +65,10 @@ Arduino will not be able to trigger the gate opening")
             cls.mock_voltages = [0] * cls.number_of_inputs
             cls.handshake()
         cls.arduino_queue = queue.Queue()
+        cls.camera_queue = cam.camera_q if cam is not None else None
 
     @classmethod
-    def get(cls, index="all"):
+    def get_analog_voltages(cls, index="all"):
         """ Get the voltage message from the arduino and return that value specified by index
         index: should be an integer to specify which analog pin value to return
         """
@@ -87,7 +88,8 @@ Arduino will not be able to trigger the gate opening")
                 return voltages
             return voltages[index]
         except queue.Empty:
-            raise AnalogSerialError('Arduino Queue was empty when trying to get voltages')
+            raise ArduinoInterfaceError('Arduino Queue was empty when trying to get voltages') \
+                    from None
 
     @classmethod
     def handshake(cls):
@@ -178,6 +180,7 @@ Arduino will not be able to trigger the gate opening")
         """ Arduino has sent a request to open the gate. This method handles the serial and
         logging of either the button or 433MHz radio that triggered the Arduino.
         """
+        # pylint: disable=too-many-branches
         message = cls.ser.readline().decode("ascii").rstrip()
         logger.debug("Arduino: %s", message)
         cls.arduino_logger.debug(message)
@@ -189,11 +192,17 @@ Arduino will not be able to trigger the gate opening")
                     logger.warning("Outside button pressed")
                 else:
                     logger.info("Outside button pressed")
+                # Take picture
+                if cls.camera_queue is not None:
+                    cls.camera_queue.put("outside")
             elif pin == config.BUTTON_INSIDE_PIN:
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Inside button pressed")
                 else:
                     logger.info("Inside button pressed")
+                # Take picture
+                if cls.camera_queue is not None:
+                    cls.camera_queue.put("inside")
             elif pin == config.BUTTON_BOX_PIN:
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Box button pressed")

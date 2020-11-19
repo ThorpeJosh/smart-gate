@@ -14,12 +14,4 @@ arduino-cli core install arduino:avr
 
 # Install 3rd party arduino libraries
 arduino-cli lib install QuickMedianLib
-
-# Get RadioHead arduino library
-mkdir -p ~/Arduino/libraries/
-cd ~/Arduino/libraries/
-echo "Getting RadioHead library"
-RH_NAME='RadioHead-1.111.zip'
-wget http://www.airspayce.com/mikem/arduino/RadioHead/"$RH_NAME"
-unzip -oq "$RH_NAME"
-rm "$RH_NAME"
+arduino-cli lib install Servo
