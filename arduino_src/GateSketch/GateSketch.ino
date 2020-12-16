@@ -220,7 +220,7 @@ void getButtonPins()
 bool checkButtons()
 {
     bool pressed;
-    int noSamples = 100;
+    int noSamples = 50;
     for (int i=0; i<10; i++)
     {
         if (buttonPins[i] > 0)
