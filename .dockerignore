@@ -1,0 +1,14 @@
+#Ignore the following directories
+reference/
+shell_ui/
+
+#Ignoring the following files
+Dockerfile
+deploy.sh
+tox.ini
+rpi_src/test*
+Jenkins*
+
+#Ignoring git and cache folders
+.git
+.cache
