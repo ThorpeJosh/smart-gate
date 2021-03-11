@@ -6,5 +6,5 @@ docker build \
     --build-arg VERSION=$VERSION \
     -t smart-gate:$VERSION \
     -t smart-gate:latest \
-    --no-cache --squash \
+    --no-cache --rm \
     - < Dockerfile
