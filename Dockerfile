@@ -16,12 +16,15 @@ RUN apt-get update \
 WORKDIR /root
 RUN git clone --depth=1 --branch=docker https://github.com/ThorpeJosh/smart-gate.git
 WORKDIR /root/smart-gate
+# Remove unneeded files for production
 RUN rm -rf .git .*ignore reference shell_ui Jenkinsfile* deploy.sh rpi_src/test* tox.ini
 # Install python dependencies
 RUN pip3 install .
 # Install arduino dependencies
-RUN bash arduino_src/install_and_configure_arduino-cli.sh 
+RUN bash arduino_src/install_and_configure_arduino-cli.sh
 
 LABEL git-commit="$(git rev-parse HEAD )"
 
-ENTRYPOINT ["python3", "/root/smart-gate/rpi_src/main.py"]
+# Allow arduino upload script to be used as alternative entrypoint
+RUN chmod o+x arduino_src/upload.sh
+ENTRYPOINT ["python3", "rpi_src/main.py"]
