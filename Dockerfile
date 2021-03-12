@@ -14,13 +14,14 @@ RUN apt-get update \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
-RUN git clone --depth=1 --branch=docker https://github.com/ThorpeJosh/smart-gate.git
+RUN git clone --depth=1 --branch=docker https://github.com/ThorpeJosh/smart-gate.git \
+  && cd smart-gate \
+  # Remove unneeded files for production \
+  rm -rf .git .*ignore reference shell_ui Jenkinsfile* deploy.sh rpi_src/test* tox.ini build_docker.sh run-smart-gate
+
+# Install dependencies
 WORKDIR /root/smart-gate
-# Remove unneeded files for production
-RUN rm -rf .git .*ignore reference shell_ui Jenkinsfile* deploy.sh rpi_src/test* tox.ini
-# Install python dependencies
 RUN pip3 install .
-# Install arduino dependencies
 RUN bash arduino_src/install_and_configure_arduino-cli.sh
 
 LABEL git-commit="$(git rev-parse HEAD )"
