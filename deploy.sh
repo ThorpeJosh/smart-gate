@@ -10,6 +10,10 @@ sudo apt-get install -y \
     python3-pip \
     virtualenv
 
+# Install docker and download postgres database
+curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+sudo docker pull postgres:13
+
 # Setup the virtual environment
 if [ -f venv/bin/activate ]
 then
