@@ -11,6 +11,28 @@ root_logger = logging.getLogger("root")
 class DB:
     """ DB class for managing the connections, tables, insertions
     """
+    @staticmethod
+    def deploy():
+        """ Deploy the postgres db in docker
+        """
+        db_password = config.DB_PASSWORD
+        # If password is None, then do not deploy
+        if db_password is not None:
+            root_logger.info("Deploying DB")
+            subprocess.call([
+                'sudo', 'docker', 'run', '-d',
+                '--name', 'smart-gate-db',
+                '-e', 'POSTGRES_USER=smart-gate',
+                '-e', 'POSTGRES_PASSWORD={}'.format(db_password),
+                '-v', '/home/pi/.local/share/smart-gate/db:/var/lib/postgresql/data',
+                '-p', '5432:5432',
+                '--shm-size=256MB',
+                '--restart', 'unless-stopped',
+                'postgres:13'])
+        else:
+            root_logger.warning("DB password needs changing, DB not deployed")
+
+
     def __init__(self):
         try:
             self.connection = psycopg2.connect(
