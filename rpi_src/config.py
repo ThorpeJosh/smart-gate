@@ -94,6 +94,12 @@ class Config:
         # 8 Character password that the arduino 433MHz is looking for, if 433MHz receiver is used
         cls.RADIO_KEY = config.get("keys", "radio_key")
 
+        # DB password
+        cls.DB_PASSWORD = config.get("keys", "db_password")
+        # if DB password is unchanged then set to None, so DB won't deploy
+        if cls.DB_PASSWORD == "changeme":
+            cls.DB_PASSWORD = None
+
         # Camera parameters
         cls.CAMERA_ENABLED = config.getboolean("camera", "enable")
         cls.CAMERA_SAVE_PATH = config.get("camera", "save_path")
@@ -262,6 +268,8 @@ class Config:
             config["keys"] = {
                 "# Secret key to use for 433MHz radio, if being used. Must be 8 characters": None,
                 "radio_key": "8CharSec",
+                "# Database Password. If unchanged, the DB will not deploy": None,
+                "db_password": "changeme",
             }
 
             path = os.path.split(config_location)[0]
