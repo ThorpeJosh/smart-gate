@@ -9,6 +9,7 @@ from battery_voltage_log import BatteryVoltageLog
 from gate import Gate
 from job_queue import JobQueue
 from camera import Camera
+from db import DB
 
 logger = logging.getLogger('root')
 
@@ -63,7 +64,8 @@ if __name__ == '__main__':
     cam = Camera() if config.CAMERA_ENABLED else None
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     gate = Gate(job_q)
-    ArduinoInterface.initialize(gate, job_q, cam)
+    db = DB()
+    ArduinoInterface.initialize(gate, job_q, cam, db)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()
     try:
@@ -82,5 +84,6 @@ if __name__ == '__main__':
         logger.critical('Critical Exception: %s', exception)
     finally:
         logger.debug('running cleanup')
+        db.cleanup()
         job_q.cleanup()
         config.log_listener.stop()
