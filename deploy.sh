@@ -12,6 +12,7 @@ sudo apt-get install -y \
 
 # Install docker and download postgres database
 curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+rm get-docker.sh
 sudo docker pull postgres:13
 
 # Setup the virtual environment
@@ -28,6 +29,10 @@ else
     export READTHEDOCS=True # picamera requirement
     pip install .
 fi
+
+# Deploy the db
+cd rpi_src
+python -c "from db import DB; DB.deploy()"
 
 # Compile and upload arduino code
 bash arduino_src/install_and_configure_arduino-cli.sh
