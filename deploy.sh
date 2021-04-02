@@ -11,8 +11,13 @@ sudo apt-get install -y \
     virtualenv
 
 # Install docker and download postgres database
-curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-rm get-docker.sh
+if [ ! $(command -v docker) ]
+then
+    curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+    rm get-docker.sh
+else
+    echo "Skipping docker install, already installed"
+fi
 sudo docker pull postgres:13
 
 # Setup the virtual environment
