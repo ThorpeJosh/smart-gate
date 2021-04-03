@@ -8,7 +8,8 @@ cd /home/${VALID_USER}/smart-gate/
 sudo apt-get install -y \
     python3-dev \
     python3-pip \
-    virtualenv
+    virtualenv \
+    libpq5
 
 # Install docker and download postgres database
 if [ ! $(command -v docker) ]
