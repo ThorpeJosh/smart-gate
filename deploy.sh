@@ -39,6 +39,7 @@ fi
 # Deploy the db
 cd rpi_src
 python -c "from db import DB; DB.deploy()"
+cd ..
 
 # Compile and upload arduino code
 bash arduino_src/install_and_configure_arduino-cli.sh
