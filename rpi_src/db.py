@@ -55,7 +55,7 @@ class DB:
         """
         self.cursor.execute("CREATE TABLE IF NOT EXISTS EntryTable( \
             entry_id SERIAL PRIMARY KEY, \
-            datetime TIMESTAMP NOT NULL, \
+            datetime TIMESTAMP NOT NULL UNIQUE, \
             timezone VARCHAR(50) NOT NULL, \
             button VARCHAR(20), \
             media_filename TEXT UNIQUE);")
@@ -69,6 +69,16 @@ class DB:
                     VALUES (%s, %s, %s, %s)"
             tzname = tzlocal.get_localzone().zone
             self.cursor.execute(sql, (button, entry_dt, tzname, media_filename))
+            self.connection.commit()
+
+    def add_media_filename(self, entry_dt, media_filename):
+        """ Add the media_filename to an existing entry
+        """
+        if self.db_running:
+            sql = "UPDATE entrytable \
+                    SET media_filename = %s \
+                    where datetime = %s"
+            self.cursor.execute(sql, (media_filename, entry_dt))
             self.connection.commit()
 
     def cleanup(self):

@@ -61,10 +61,10 @@ def lock_open_loop(_gate, queue):
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
-    cam = Camera() if config.CAMERA_ENABLED else None
+    db = DB()
+    cam = Camera(db) if config.CAMERA_ENABLED else None
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     gate = Gate(job_q)
-    db = DB()
     ArduinoInterface.initialize(gate, job_q, cam, db)
     battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
     battery_logger.start()

@@ -2,7 +2,6 @@
 the smart-gate
 """
 import os
-import datetime
 import time
 import logging
 import queue
@@ -20,11 +19,12 @@ except OSError:
 
 class Camera():
     """ Class to handle operations of the camera """
-    def __init__(self):
+    def __init__(self, entry_db):
         # setup camera queue and start a thread to read it and handle the camera
         self.camera_q = queue.Queue()
         threading.Thread(target=self._read_queue, daemon=True).start()
         logger.debug("Camera class has been initialized")
+        self.entry_db = entry_db
 
     @staticmethod
     def move_servo(position):
@@ -35,12 +35,9 @@ class Camera():
         ArduinoInterface.ser.write(position.to_bytes(1, byteorder='little'))
 
 
-    @staticmethod
-    def take_picture():
+    def take_picture(self, now):
         """ Method to take a picture using the rpi camera
         """
-        # Record datetime for filename
-        now = datetime.datetime.now()
         datetime_string = '{}{}{}{}{}{}'.format(
             str(now.year).zfill(4),
             str(now.month).zfill(2),
@@ -48,8 +45,9 @@ class Camera():
             str(now.hour).zfill(2),
             str(now.minute).zfill(2),
             str(now.second).zfill(2))
-        filename = os.path.join(config.CAMERA_SAVE_PATH, '{}.jpg'.format(datetime_string))
-        logger.debug("Taking a picture: %s", filename)
+        filename = '{}.jpg'.format(datetime_string)
+        filepath = os.path.join(config.CAMERA_SAVE_PATH, filename)
+        logger.debug("Taking a picture: %s", filepath)
 
         # Create camera objects
         camera = PiCamera()
@@ -60,11 +58,17 @@ class Camera():
         camera.capture(filename)
         camera.close()
 
+        # Update db with filename
+        self.entry_db.add_media_filename(now, filename)
+
     def _read_queue(self):
         """ Method that monitors camera queue and takes pictures when requested
         """
         while True:
             job = self.camera_q.get()
+            # If job is a tuple then  job is (button, datetime), else it will be "kill"
+            if isinstance(job, tuple):
+                job, entry_dt = job
             logger.debug("Camera queue: %s", job)
             # Exit thread gracefully with a 'kill' command
             if job == 'kill':
@@ -72,9 +76,9 @@ class Camera():
                 return
             if job == 'inside':
                 self.move_servo(config.CAMERA_INSIDE_ANGLE)
-                self.take_picture()
+                self.take_picture(entry_dt)
             elif job == 'outside':
                 self.move_servo(config.CAMERA_OUTSIDE_ANGLE)
-                self.take_picture()
+                self.take_picture(entry_dt)
             else:
                 logger.warning("Received invalid command on camera queue")

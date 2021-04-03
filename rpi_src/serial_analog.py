@@ -201,7 +201,7 @@ Arduino will not be able to trigger the gate opening")
                     logger.info("Outside button pressed")
                 # Take picture
                 if cls.camera_queue is not None:
-                    cls.camera_queue.put("outside")
+                    cls.camera_queue.put(("outside", message_dt))
             elif pin == config.BUTTON_INSIDE_PIN:
                 button = "inside"
                 if cls.gate.current_mode.endswith("away"):
@@ -210,7 +210,7 @@ Arduino will not be able to trigger the gate opening")
                     logger.info("Inside button pressed")
                 # Take picture
                 if cls.camera_queue is not None:
-                    cls.camera_queue.put("inside")
+                    cls.camera_queue.put(("inside", message_dt))
             elif pin == config.BUTTON_BOX_PIN:
                 button = "box"
                 if cls.gate.current_mode.endswith("away"):
