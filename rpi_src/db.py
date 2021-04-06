@@ -1,5 +1,6 @@
 """Smart gate db module
 """
+import time
 import logging
 import subprocess
 import datetime
@@ -32,7 +33,8 @@ class DB:
                 'postgres:13'])
         else:
             root_logger.warning("DB password needs changing, DB not deployed")
-
+            # Sleep to allow the above log message to get logged if DB.deploy is called from cli.
+            time.sleep(1)
 
     def __init__(self):
         try:
