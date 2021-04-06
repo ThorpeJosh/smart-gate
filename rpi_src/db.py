@@ -50,7 +50,8 @@ class DB:
         except psycopg2.OperationalError as err:
             # Likely the db is not running, so continue without it.
             self.db_running = False
-            root_logger.warning("DB did not connect, proceeding without db: %s", err)
+            root_logger.warning("DB did not connect (try deploying db), proceeding without db: %s",
+                                err)
 
     def create_entry_table(self):
         """ Creates entry table in the smart-gate db
