@@ -66,7 +66,7 @@ if __name__ == '__main__':
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
     gate = Gate(job_q)
     ArduinoInterface.initialize(gate, job_q, cam, db)
-    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN)
+    battery_logger = BatteryVoltageLog(config.BATTERY_VOLTAGE_LOG, config.BATTERY_VOLTAGE_PIN, db)
     battery_logger.start()
     try:
         while 1:

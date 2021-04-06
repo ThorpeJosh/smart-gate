@@ -2,6 +2,7 @@
 """
 import logging
 import subprocess
+import datetime
 import tzlocal
 import psycopg2
 from config import Config as config
@@ -44,6 +45,7 @@ class DB:
 
             self.cursor = self.connection.cursor()
             self.create_entry_table()
+            self.create_batt_voltage_table()
             self.db_running = True
         except psycopg2.OperationalError as err:
             # Likely the db is not running, so continue without it.
@@ -59,6 +61,16 @@ class DB:
             timezone VARCHAR(50) NOT NULL, \
             button VARCHAR(20), \
             media_filename TEXT UNIQUE);")
+        self.connection.commit()
+
+    def create_batt_voltage_table(self):
+        """ Creates battery voltage table in the smart-gate db
+        """
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS BattVolt( \
+            id SERIAL PRIMARY KEY, \
+            datetime TIMESTAMP NOT NULL UNIQUE, \
+            timezone VARCHAR(50) NOT NULL, \
+            voltage FLOAT NOT NULL);")
         self.connection.commit()
 
     def add_entry(self, button, entry_dt, media_filename=None):
@@ -79,6 +91,17 @@ class DB:
                     SET media_filename = %s \
                     where datetime = %s"
             self.cursor.execute(sql, (media_filename, entry_dt))
+            self.connection.commit()
+
+    def log_voltage(self, voltage):
+        """ Log the battery voltage to the BattVolt table
+        """
+        if self.db_running:
+            sql = "INSERT INTO BattVolt(datetime, timezone, voltage) \
+                    VALUES (%s, %s, %s)"
+            dt_now = datetime.datetime.now()
+            tzname = tzlocal.get_localzone().zone
+            self.cursor.execute(sql, (dt_now, tzname, voltage))
             self.connection.commit()
 
     def cleanup(self):
