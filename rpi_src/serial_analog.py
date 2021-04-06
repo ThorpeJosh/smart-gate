@@ -1,6 +1,7 @@
 """ Module to communicate with Arduino
 """
 import logging
+import datetime
 import time
 import queue
 import threading
@@ -23,7 +24,7 @@ class ArduinoInterface:
     """
 
     @classmethod
-    def initialize(cls, gate=None, job_q=None, cam=None):
+    def initialize(cls, gate=None, job_q=None, cam=None, entry_db=None):
         """ Method similar to __init__ but it does not make sense for any instances to be created
         of this class.
         This method initializes the class variables and sets up mock mode if necessary.
@@ -52,6 +53,7 @@ class ArduinoInterface:
         else:
             logger.warning("Job Queue was not passed to ArduinoInterface,\
 Arduino will not be able to trigger the gate opening")
+        # Initiate the serial connection
         try:
             cls.ser = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1)
             cls.ser.flush()
@@ -66,6 +68,9 @@ Arduino will not be able to trigger the gate opening")
             cls.handshake()
         cls.arduino_queue = queue.Queue()
         cls.camera_queue = cam.camera_q if cam is not None else None
+        # Give class access to the db
+        cls.db = entry_db if entry_db is not None else \
+                logger.warning("DB was not passed to ArduinoInterface")
 
     @classmethod
     def get_analog_voltages(cls, index="all"):
@@ -182,35 +187,41 @@ Arduino will not be able to trigger the gate opening")
         """
         # pylint: disable=too-many-branches
         message = cls.ser.readline().decode("ascii").rstrip()
+        message_dt = datetime.datetime.now()
         logger.debug("Arduino: %s", message)
         cls.arduino_logger.debug(message)
         # Check what button triggered the arduino and send email if in away mode
         try:
             pin = int(message)
             if pin == config.BUTTON_OUTSIDE_PIN:
+                button = "outside"
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Outside button pressed")
                 else:
                     logger.info("Outside button pressed")
                 # Take picture
                 if cls.camera_queue is not None:
-                    cls.camera_queue.put("outside")
+                    cls.camera_queue.put(("outside", message_dt))
             elif pin == config.BUTTON_INSIDE_PIN:
+                button = "inside"
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Inside button pressed")
                 else:
                     logger.info("Inside button pressed")
                 # Take picture
                 if cls.camera_queue is not None:
-                    cls.camera_queue.put("inside")
+                    cls.camera_queue.put(("inside", message_dt))
             elif pin == config.BUTTON_BOX_PIN:
+                button = "box"
                 if cls.gate.current_mode.endswith("away"):
                     logger.warning("Box button pressed")
                 else:
                     logger.info("Box button pressed")
             else:
+                button = "unknown"
                 logger.warning("Unknown button pressed")
             cls.job_q.validate_and_put('open')
+            cls.db.add_entry(button, message_dt)
         except AttributeError:
             logger.debug("Arduino tried to open gate, but didn't have access to queue")
         except ValueError:

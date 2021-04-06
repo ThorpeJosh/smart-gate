@@ -38,7 +38,7 @@ pipeline {
         stage('Test RPi Code'){
             steps{
                 sh'''
-                rm ~/.config/smart-gate/conf.ini
+                rm -f ~/.config/smart-gate/conf.ini
                 . venv/bin/activate
                 tox
                 '''

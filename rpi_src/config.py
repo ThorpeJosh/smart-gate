@@ -94,6 +94,12 @@ class Config:
         # 8 Character password that the arduino 433MHz is looking for, if 433MHz receiver is used
         cls.RADIO_KEY = config.get("keys", "radio_key")
 
+        # DB password
+        cls.DB_PASSWORD = config.get("keys", "db_password")
+        # if DB password is unchanged then set to None, so DB won't deploy
+        if cls.DB_PASSWORD == "changeme":
+            cls.DB_PASSWORD = None
+
         # Camera parameters
         cls.CAMERA_ENABLED = config.getboolean("camera", "enable")
         cls.CAMERA_SAVE_PATH = config.get("camera", "save_path")
@@ -131,16 +137,20 @@ class Config:
 
         # Log to email
         cls.email_conf()
-        email_handler = logging.handlers.SMTPHandler(
-            mailhost=(cls.SMTP, cls.PORT),
-            fromaddr=cls.FROMADDR,
-            toaddrs=cls.TOADDRS,
-            subject=cls.SUBJECT,
-            credentials=(cls.USER_ID, cls.USER_KEY),
-            secure=(),
-        )
-        email_handler.setFormatter(logging.Formatter(log_format))
-        email_handler.setLevel(logging.WARNING)
+        if cls.EMAIL_LOGGING:
+            email_handler = logging.handlers.SMTPHandler(
+                mailhost=(cls.SMTP, cls.PORT),
+                fromaddr=cls.FROMADDR,
+                toaddrs=cls.TOADDRS,
+                subject=cls.SUBJECT,
+                credentials=(cls.USER_ID, cls.USER_KEY),
+                secure=(),
+            )
+            email_handler.setFormatter(logging.Formatter(log_format))
+            email_handler.setLevel(logging.WARNING)
+        else:
+            # No email conf has been provided. Set to NullHandler for the QueueListener
+            email_handler = logging.NullHandler()
 
         # Log everything to a Queue to avoid each handler from blocking (especially email handler)
         log_q = Queue()
@@ -152,7 +162,7 @@ class Config:
             log_q, file_handler, stream_handler, email_handler, respect_handler_level=True
         )
         cls.log_listener.start()
-        if cls.SMTP is None:
+        if cls.EMAIL_LOGGING is False:
             cls.logger.warning("No email config json found")
 
     @classmethod
@@ -162,14 +172,7 @@ class Config:
         try:
             with open(cls.EMAIL_KEY_JSON, "r") as json_file:
                 json_data = json.load(json_file)
-            cls.SMTP = json_data["smtp"]
-            cls.PORT = json_data["port"]
-            cls.FROMADDR = json_data["fromaddr"]
-            cls.TOADDRS = json_data["toaddrs"]
-            cls.SUBJECT = json_data["subject"]
-            cls.USER_ID = json_data["credentials"]["id"]
-            cls.USER_KEY = json_data["credentials"]["key"]
-
+            # Validate the json schema
             json_schema = {
                 "type": "object",
                 "properties": {
@@ -185,14 +188,16 @@ class Config:
                 },
             }
             validate(instance=json_data, schema=json_schema)
+            cls.SMTP = json_data["smtp"]
+            cls.PORT = json_data["port"]
+            cls.FROMADDR = json_data["fromaddr"]
+            cls.TOADDRS = json_data["toaddrs"]
+            cls.SUBJECT = json_data["subject"]
+            cls.USER_ID = json_data["credentials"]["id"]
+            cls.USER_KEY = json_data["credentials"]["key"]
+            cls.EMAIL_LOGGING = True
         except FileNotFoundError:
-            cls.SMTP = None
-            cls.PORT = None
-            cls.FROMADDR = None
-            cls.TOADDRS = None
-            cls.SUBJECT = None
-            cls.USER_ID = None
-            cls.USER_KEY = None
+            cls.EMAIL_LOGGING = False
 
     @classmethod
     def read_write_config(cls, config_location):
@@ -262,6 +267,8 @@ class Config:
             config["keys"] = {
                 "# Secret key to use for 433MHz radio, if being used. Must be 8 characters": None,
                 "radio_key": "8CharSec",
+                "# Database Password. If unchanged, the DB will not deploy": None,
+                "db_password": "changeme",
             }
 
             path = os.path.split(config_location)[0]
