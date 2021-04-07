@@ -267,7 +267,7 @@ class Config:
             config["keys"] = {
                 "# Secret key to use for 433MHz radio, if being used. Must be 8 characters": None,
                 "radio_key": "8CharSec",
-                "# Database Password. If unchanged, the DB will not deploy": None,
+                "# Database Password (avoid symbols). If unchanged, the DB will not deploy": None,
                 "db_password": "changeme",
             }
 

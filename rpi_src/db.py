@@ -49,6 +49,7 @@ class DB:
             self.create_entry_table()
             self.create_batt_voltage_table()
             self.db_running = True
+            root_logger.info("Connected to db successfully")
         except psycopg2.OperationalError as err:
             # Likely the db is not running, so continue without it.
             self.db_running = False
