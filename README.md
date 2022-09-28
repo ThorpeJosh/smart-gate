@@ -1,6 +1,6 @@
 # Raspberry pi powered smart gate
-[![Build Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart_gate%2Fmaster&subject=build%20status)](http://jenkins.thorpe.engineering:8080/job/smart_gate/job/master/) 
-[![Deployment Status](http://jenkins.thorpe.engineering:8080/buildStatus/icon?job=smart-gate-deploy&subject=deployment%20status)](http://jenkins.thorpe.engineering:8080/job/smart-gate-deploy/)  
+[![Build Status](https://jenkins.thorpe.work/buildStatus/icon?job=smart_gate%2Fmaster&subject=build%20status)](https://jenkins.thorpe.engineering:8080/job/smart_gate/job/master/) 
+[![Deployment Status](https://jenkins.thorpe.work/buildStatus/icon?job=smart-gate-deploy&subject=deployment%20status)](https://jenkins.thorpe.work/job/smart-gate-deploy/)  
 This repo is for an IOT inspired raspberry pi controller for a motorised gate.  
 In this application the gate is driven by a 24V motor with a 24V battery and solar charging system. 
 An internet connection is supplied to the Raspberry Pi (RPi) via ethernet, and in the initial application of this project the gate was in a remote location where a pair of long range wifi APs in a wireless bridge mode were used to give internet access to the RPi. 
