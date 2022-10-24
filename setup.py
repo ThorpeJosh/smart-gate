@@ -13,10 +13,10 @@ setup(
     keywords=['IOT', 'RPi', 'smart', 'gate'],
     packages=['rpi_src'],
     include_package_data=True,
-    install_requires=['pyserial>=3.4', 'pathlib==1.0.1', 'schedule>=0.6.0', 'gpiozero>=1.5.0',
-                      'RPI.GPIO>=0.7.0', 'picamera>=1.13', 'jsonschema>=3.0.0',
+    install_requires=['pyserial==3.4', 'pathlib==1.0.1', 'schedule==0.6.0', 'gpiozero==1.5.0',
+                      'picamera==1.13', 'jsonschema==3.0.0',
                       'psycopg2-binary>=2.8.0', 'tzlocal>=2.1'],
-    extras_require={"dev": ["pytest>=6.0.0", "pylint>=2.6.0", "tox>= 3.0.0"]},
+    extras_require={"dev": ["pytest==6.0.0", "pylint==2.6.0", "tox== 3.0.0"]},
     python_requires='>=3.5',
     classifiers=[
         'License :: OSI Approved :: MIT License',
