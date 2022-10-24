@@ -1,54 +1,32 @@
 pipeline {
+    agent { dockerfile true }
     options {
         timeout(time: 5, unit: 'MINUTES')
-        } 
-    agent any
-
+        }
+    environment {
+        DOCKER_IMAGE = 'thorpejosh/smart-gate'
+        PROD_TAG = 'latest'
+        DEV_TAG = 'latest-dev'
+    }
     stages {
-        stage('Build Environments') {
-            parallel {
-                stage('Python Environment') {
-                    steps {
-                        sh '''
-                        rm -rf venv .tox
-                        virtualenv venv -p python3
-                        . venv/bin/activate
-                        export READTHEDOCS=True # picamera requirement
-                        pip install .[dev]
-                        '''
-                    }
-                }
-                stage('Arduino Environment') {
-                    steps {
-                        sh '''
-                        bash arduino_src/install_and_configure_arduino-cli.sh
-                        '''
-                    }
-                }
+        stage('Build Image') {
+            steps {
+                echo "built image"
             }
         }
         stage('Lint RPi Code') {
             steps {
-                sh '''
-                . venv/bin/activate
-                pylint rpi_src/*.py
-                '''
+                sh "pylint rpi_src/*.py"
             }
         }
         stage('Test RPi Code'){
             steps{
-                sh'''
-                rm -f ~/.config/smart-gate/conf.ini
-                . venv/bin/activate
-                tox
-                '''
+                sh "pytest"
             }
         }
         stage('Compile Arduino Code') {
             steps {
-                sh '''
-                bash arduino_src/verify.sh
-                '''
+                sh "bash arduino_src/verify.sh"
             }
         }
     }
