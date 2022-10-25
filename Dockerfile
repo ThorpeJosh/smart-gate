@@ -1,4 +1,4 @@
-FROM python:3.9-bullseye AS prod
+FROM python:3.9-bullseye
 LABEL maintainer="Joshua Thorpe"
 ARG VERSION
 LABEL version="$VERSION"
@@ -24,7 +24,3 @@ LABEL git-commit="$(git rev-parse HEAD )"
 # Allow arduino upload script to be used as alternative entrypoint
 RUN chmod o+x arduino_src/upload.sh
 CMD ["python3", "rpi_src/main.py"]
-
-FROM prod AS dev
-WORKDIR /root/smart-gate
-RUN pip install .[dev]
