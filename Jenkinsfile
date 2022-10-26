@@ -30,7 +30,7 @@ pipeline {
                         steps {
                             echo "PLATFORM=${PLATFORM}"
                             sh'''
-                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') pylint rpi_src/*.py
+                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && pylint rpi_src/*.py'
                             '''
                         }
                     }
@@ -38,7 +38,7 @@ pipeline {
                         steps{
                             echo "PLATFORM=${PLATFORM}"
                             sh'''
-                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') pytest
+                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && pytest'
                             '''
                         }
                     }
@@ -46,7 +46,7 @@ pipeline {
                         steps {
                             echo "PLATFORM=${PLATFORM}"
                             sh'''
-                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash arduino_src/verify.sh
+                            docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && bash arduino_src/verify.sh'
                             '''
                         }
                     }
