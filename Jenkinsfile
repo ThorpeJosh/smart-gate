@@ -15,7 +15,7 @@ pipeline {
             steps {
                 echo "Building Image: ${DOCKER_IMAGE}"
                 sh'''
-                docker build --pull --force-rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}:tmp" .
+                docker build --pull --force-rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
                 '''
             }
         }
