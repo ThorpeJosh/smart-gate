@@ -1,0 +1,20 @@
+#Ignore the following directories
+reference/
+shell_ui/
+
+#Ignoring the following files
+Dockerfile
+deploy.sh
+tox.ini
+Jenkins*
+
+#Ignoring various dot and build files
+.git
+.cache
+.gitignore
+.dockerignore
+build/
+dist/
+**/*.pyc
+**/*.tgz
+*.egg-info

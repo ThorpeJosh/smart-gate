@@ -1,55 +1,67 @@
 pipeline {
+    agent { label 'docker && linux' }
     options {
-        timeout(time: 5, unit: 'MINUTES')
-        } 
-    agent any
-
+        timeout(time: 60, unit: 'MINUTES')
+        }
+    environment {
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_CREDS = credentials('DockerHubCredential')
+        DOCKER_IMAGE = "${DOCKER_CREDS_USR}/smart-gate"
+    }
     stages {
-        stage('Build Environments') {
-            parallel {
-                stage('Python Environment') {
-                    steps {
-                        sh '''
-                        rm -rf venv .tox
-                        virtualenv venv -p python3
-                        . venv/bin/activate
-                        export READTHEDOCS=True # picamera requirement
-                        pip install .[dev]
-                        '''
+        stage('ARM & x86 Pipeline') {
+            matrix {
+                axes {
+                    axis {
+                        name 'PLATFORM'
+                        values 'linux/arm/v7', 'linux/arm64/v8', 'linux/amd64'
                     }
                 }
-                stage('Arduino Environment') {
-                    steps {
-                        sh '''
-                        bash arduino_src/install_and_configure_arduino-cli.sh
-                        '''
+                stages {
+                    stage('Build Image') {
+                        steps {
+                            echo "Building Image: ${DOCKER_IMAGE} for ${PLATFORM}"
+                            sh'''
+                            docker build --pull --force-rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
+                            '''
+                        }
+                    }
+                    stage('Lint RPi Code') {
+                        steps {
+                            echo "PLATFORM=${PLATFORM}"
+                            sh'''
+                            docker run --rm -t --platform "${PLATFORM}" "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && pylint rpi_src/*.py'
+                            '''
+                        }
+                    }
+                    stage('Test RPi Code'){
+                        steps{
+                            echo "PLATFORM=${PLATFORM}"
+                            sh'''
+                            docker run --rm -t --platform "${PLATFORM}" "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && pytest'
+                            '''
+                        }
+                    }
+                    stage('Compile Arduino Code') {
+                        steps {
+                            echo "PLATFORM=${PLATFORM}"
+                            sh'''
+                            docker run --rm -t --platform "${PLATFORM}" "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') bash -c 'uname -m && bash arduino_src/verify.sh'
+                            '''
+                        }
                     }
                 }
             }
         }
-        stage('Lint RPi Code') {
-            steps {
-                sh '''
-                . venv/bin/activate
-                pylint rpi_src/*.py
-                '''
-            }
-        }
-        stage('Test RPi Code'){
-            steps{
-                sh'''
-                rm -f ~/.config/smart-gate/conf.ini
-                . venv/bin/activate
-                tox
-                '''
-            }
-        }
-        stage('Compile Arduino Code') {
-            steps {
-                sh '''
-                bash arduino_src/verify.sh
-                '''
-            }
+    }
+    post {
+        always {
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true,
+                    patterns: [[pattern: '.gitignore', type: 'INCLUDE'],
+                               [pattern: '.propsfile', type: 'EXCLUDE']])
         }
     }
 }
