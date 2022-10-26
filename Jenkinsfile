@@ -21,17 +21,17 @@ pipeline {
         }
         stage('Lint RPi Code') {
             steps {
-                sh "pylint rpi_src/*.py"
+                sh 'docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}:tmp" pylint rpi_src/*.py'
             }
         }
         stage('Test RPi Code'){
             steps{
-                sh "pytest"
+                sh 'docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}:tmp" pytest'
             }
         }
         stage('Compile Arduino Code') {
             steps {
-                sh "bash arduino_src/verify.sh"
+                sh 'docker run --rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}:tmp" bash arduino_src/verify.sh'
             }
         }
     }
