@@ -8,6 +8,7 @@ RUN apt-get update \
     curl \
     sudo \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Try install rpi.io via apt (arm) or pip (x86)
 RUN apt-get update \
   && apt-get install -yq rpi.gpio || pip install --no-cache-dir RPi.GPIO \
   ; apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -21,8 +22,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -e  . \
     && rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info
 RUN bash arduino_src/install_and_configure_arduino-cli.sh
-
-LABEL git-commit="$(git rev-parse HEAD )"
 
 # Allow arduino upload script to be used as alternative entrypoint
 RUN chmod o+x arduino_src/upload.sh

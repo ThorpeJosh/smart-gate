@@ -7,5 +7,6 @@ docker build \
     -t thorpejosh/smart-gate:$VERSION \
     -t thorpejosh/smart-gate:latest \
     --pull \
+    --target prod \
+    .
     #--platform linux/arm/v7 \
-    - < Dockerfile
