@@ -9,7 +9,7 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_CREDS_USR}/smart-gate"
     }
     stages {
-        stage('ARM Pipeline') {
+        stage('ARM & x86 Pipeline') {
             matrix {
                 axes {
                     axis {
