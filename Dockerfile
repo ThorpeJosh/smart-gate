@@ -7,8 +7,10 @@ RUN apt-get update \
     git \
     curl \
     sudo \
-    rpi.gpio \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -yq rpi.gpio || pip install --no-cache-dir RPi.GPIO \
+  ; apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/smart-gate
 COPY . .
