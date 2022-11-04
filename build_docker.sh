@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.0"
+VERSION="$(git describe --tags)"
 
 echo "Building smart-gate docker version:$VERSION"
 docker build \
