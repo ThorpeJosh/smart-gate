@@ -2,12 +2,9 @@ FROM python:3.9-bullseye AS prod
 LABEL maintainer="Joshua Thorpe"
 ARG VERSION
 LABEL version="$VERSION"
-RUN apt-get update \
-  && apt-get install -yq \
-    git \
-    curl \
-    sudo \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV SMART_GATE_VERSION="$VERSION"
+ENV SMART_GATE_CONTAINER="TRUE"
+
 # Try install rpi.io via apt (arm) or pip (x86)
 RUN apt-get update \
   && apt-get install -yq rpi.gpio || pip install --no-cache-dir RPi.GPIO \
