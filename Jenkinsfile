@@ -27,6 +27,9 @@ pipeline {
                         }
                     }
                     stage('Lint RPi Code') {
+                        when {
+                            environment name: 'PLATFORM', value: 'linux/amd64'
+                        }
                         steps {
                             echo "PLATFORM=${PLATFORM}"
                             sh'''
