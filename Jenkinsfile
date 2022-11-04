@@ -53,6 +53,24 @@ pipeline {
                 }
             }
         }
+        stage('Publish Images') {
+            when {
+                environment name: 'BRANCH_IS_PRIMARY', value: 'true'
+            }
+            steps {
+                sh'''
+                echo $DOCKER_CREDS_PSW | docker login $DOCKER_REGISTRY --username $DOCKER_CREDS_USR --password-stdin
+                docker push --all-tags "${DOCKER_IMAGE}"
+                docker manifest create "${DOCKER_IMAGE}:${BUILD_NUMBER}" \
+                    "${DOCKER_IMAGE}":linux_arm_v7 \
+                    "${DOCKER_IMAGE}":linux_arm64_v8 \
+                    "${DOCKER_IMAGE}":linux_amd64
+                docker manifest inspect "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                docker manifest push --purge "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                docker logout
+                '''
+            }
+        }
     }
     post {
         always {
