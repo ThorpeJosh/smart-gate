@@ -11,6 +11,7 @@ pipeline {
     stages {
         stage('Pre-Build Environment') {
             steps {
+                sh 'git fetch --tags'
                 echo "Name: ${env.BRANCH_NAME}"
                 echo "Change: ${env.CHANGE_ID}"
                 echo "Source branch: ${env.CHANGE_BRANCH}"
@@ -19,7 +20,7 @@ pipeline {
                 echo "Tag name: ${env.TAG}"
                 echo "Tag date: ${env.TAG_DATE}"
                 echo "Commit: ${env.GIT_COMMIT}"
-                sh 'echo $(git describe --tags)'
+                sh 'git describe --tags'
             }
         }
         stage('ARM & x86 Pipeline') {
@@ -35,7 +36,7 @@ pipeline {
                         steps {
                             echo "Building Image: ${DOCKER_IMAGE} for ${PLATFORM}"
                             sh'''
-                            docker build --pull --force-rm --build-arg VERSION="${TAG}" --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
+                            docker build --pull --force-rm --build-arg VERSION=$(git describe --tags) --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
                             '''
                         }
                     }
