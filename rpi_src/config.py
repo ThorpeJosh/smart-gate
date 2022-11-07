@@ -7,6 +7,7 @@ import logging.handlers
 import os
 from queue import Queue
 import configparser
+import subprocess
 from pathlib import Path
 
 from jsonschema import validate
@@ -57,6 +58,18 @@ class Config:
     @classmethod
     def gate_globals(cls):
         """ Sets all the smart-gate globals such as pin values, and parameters """
+
+        # Get globals from environment
+        try:
+            cls.VERSION = os.environ["SMART_GATE_VERSION"]
+            inside_container = os.environ["SMART_GATE_CONTAINER"]
+            cls.CONTAINERIZED = inside_container == 'TRUE'
+        except KeyError:
+            cls.VERSION = subprocess.run(
+                    ['git', 'describe', '--tags'], check=True, capture_output=True
+                ).stdout.decode().strip('\n')
+            cls.CONTAINERIZED = False
+
         # Read from config file
         config = cls.read_write_config(os.path.join(cls.CONFIG_PATH, "conf.ini"))
 

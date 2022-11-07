@@ -61,6 +61,8 @@ def lock_open_loop(_gate, queue):
 
 if __name__ == '__main__':
     logger.info('Starting smart gate')
+    logger.debug('VERSION=%s, CONTAINERIZED=%s',
+                 config.VERSION, config.CONTAINERIZED)
     db = DB()
     cam = Camera(db) if config.CAMERA_ENABLED else None
     job_q = JobQueue(config.COMMANDS+config.MODES, config.FIFO_FILE)
