@@ -35,7 +35,7 @@ pipeline {
                         steps {
                             echo "Building Image: ${DOCKER_IMAGE} for ${PLATFORM}"
                             sh'''
-                            docker build --pull --force-rm --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
+                            docker build --pull --force-rm --build-arg VERSION="${TAG}" --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
                             '''
                         }
                     }
