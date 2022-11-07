@@ -9,6 +9,19 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_CREDS_USR}/smart-gate"
     }
     stages {
+        stage('Pre-Build Environment') {
+            steps {
+                echo "Name: ${env.BRANCH_NAME}"
+                echo "Change: ${env.CHANGE_ID}"
+                echo "Source branch: ${env.CHANGE_BRANCH}"
+                echo "Target branch: ${env.CHANGE_TARGET}"
+                echo "Branch is primary: ${env.BRANCH_IS_PRIMARY}"
+                echo "Tag name: ${env.TAG}"
+                echo "Tag date: ${env.TAG_DATE}"
+                echo "Commit: ${env.GIT_COMMIT}"
+                sh 'echo $(git describe --tags)'
+            }
+        }
         stage('ARM & x86 Pipeline') {
             matrix {
                 axes {
@@ -58,18 +71,19 @@ pipeline {
         }
         stage('Publish Images') {
             when {
-                environment name: 'BRANCH_IS_PRIMARY', value: 'true'
+                tag "v*"
+                branch 'master'
             }
             steps {
                 sh'''
                 echo $DOCKER_CREDS_PSW | docker login $DOCKER_REGISTRY --username $DOCKER_CREDS_USR --password-stdin
                 docker push --all-tags "${DOCKER_IMAGE}"
-                docker manifest create "${DOCKER_IMAGE}:${BUILD_NUMBER}" \
+                docker manifest create "${DOCKER_IMAGE}:${env.TAG_NAME}" \
                     "${DOCKER_IMAGE}":linux_arm_v7 \
                     "${DOCKER_IMAGE}":linux_arm64_v8 \
                     "${DOCKER_IMAGE}":linux_amd64
                 docker manifest inspect "${DOCKER_IMAGE}:${BUILD_NUMBER}"
-                docker manifest push --purge "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                docker manifest push --purge "${DOCKER_IMAGE}:${env.TAG_NAME}"
                 docker logout
                 '''
             }
