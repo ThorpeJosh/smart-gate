@@ -11,7 +11,6 @@ pipeline {
     stages {
         stage('Pre-Build Environment') {
             steps {
-                sh 'git fetch --tags'
                 echo "Name: ${env.BRANCH_NAME}"
                 echo "Change: ${env.CHANGE_ID}"
                 echo "Source branch: ${env.CHANGE_BRANCH}"
@@ -20,6 +19,11 @@ pipeline {
                 echo "Tag name: ${env.TAG}"
                 echo "Tag date: ${env.TAG_DATE}"
                 echo "Commit: ${env.GIT_COMMIT}"
+                sh 'git status'
+                sh 'git show'
+                sh 'git log'
+                sh 'git describe --tags'
+                sh 'git fetch --tags'
                 sh 'git describe --tags'
             }
         }
