@@ -1,69 +1,76 @@
 pipeline {
-    agent any
-
+    agent { label 'docker && linux' }
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        }
+    environment {
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_CREDS = credentials('DockerHubCredential')
+        DOCKER_IMAGE = "${DOCKER_CREDS_USR}/smart-gate"
+    }
     stages {
-        stage('Build Environments') {
-            parallel {
-                stage('Python Environment') {
-                    steps {
-                        sh '''
-                        rm -rf venv .tox .cache
-                        virtualenv venv -p python3
-                        . venv/bin/activate
-                        export READTHEDOCS=True # picamera requirement
-                        pip install .[dev]
-                        '''
-                    }
-                }
-                stage('Arduino Environment') {
-                    steps {
-                        sh '''
-                        bash arduino_src/install_and_configure_arduino-cli.sh
-                        '''
-                    }
-                }
-            }
-        }
-        stage('Lint RPi Code') {
+        stage('Pre-Build Environment') {
             steps {
-                sh '''
-                . venv/bin/activate
-                pylint rpi_src/*.py
-                '''
+                echo "Name: ${env.BRANCH_NAME}"
+                echo "Change: ${env.CHANGE_ID}"
+                echo "Source branch: ${env.CHANGE_BRANCH}"
+                echo "Target branch: ${env.CHANGE_TARGET}"
+                echo "Branch is primary: ${env.BRANCH_IS_PRIMARY}"
+                echo "Tag name: ${env.TAG_NAME}"
+                echo "Tag date: ${env.TAG_DATE}"
+                echo "Commit: ${env.GIT_COMMIT}"
+                sh 'git status'
+                sh 'git fetch --tags'
+                sh 'git describe --tags'
             }
         }
-        stage('Test RPi Code'){
-            steps{
+        stage('ARM & x86 Pipeline') {
+            matrix {
+                axes {
+                    axis {
+                        name 'PLATFORM'
+                        values 'linux/arm/v7', 'linux/arm64/v8', 'linux/amd64'
+                    }
+                }
+                stages {
+                    stage('Build Image') {
+                        steps {
+                            echo "Building Image: ${DOCKER_IMAGE} for ${PLATFORM}"
+                            sh'''
+                            docker build --pull --force-rm --build-arg VERSION="${TAG_NAME}" --target prod --platform "${PLATFORM}" -t "${DOCKER_IMAGE}":$(echo "${PLATFORM}" | sed 's/\\//_/g') .
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        stage('Publish Images') {
+            when {
+                tag "v*"
+            }
+            steps {
                 sh'''
-                rm ~/.config/smart-gate/conf.ini
-                . venv/bin/activate
-                pytest
-                tox
+                echo $DOCKER_CREDS_PSW | docker login $DOCKER_REGISTRY --username $DOCKER_CREDS_USR --password-stdin
+                docker push --all-tags "${DOCKER_IMAGE}"
+                docker manifest create "${DOCKER_IMAGE}:${TAG_NAME}" \
+                    "${DOCKER_IMAGE}":linux_arm_v7 \
+                    "${DOCKER_IMAGE}":linux_arm64_v8 \
+                    "${DOCKER_IMAGE}":linux_amd64
+                docker manifest inspect "${DOCKER_IMAGE}:${TAG_NAME}"
+                docker manifest push --purge "${DOCKER_IMAGE}:${TAG_NAME}"
+                docker logout
                 '''
             }
         }
-        stage('Compile Arduino Code') {
-            steps {
-                sh '''
-                bash arduino_src/verify.sh
-                '''
-            }
-        }
-        stage('Deploy') {
-            steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'pi_gate', keyFileVariable: 'KEY')]) {
-                    sh '''
-                    ssh -v -i ${KEY} -o StrictHostKeyChecking=no pi@10.0.0.37 "
-                    crontab -r
-                    pkill python
-                    git clone https://github.com/ThorpeJosh/smart-gate.git
-                    cd smart-gate
-                    git fetch --all
-                    git reset --hard origin/master
-                    bash deploy.sh"
-                    '''
-                }
-            }
+    }
+    post {
+        always {
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true,
+                    patterns: [[pattern: '.gitignore', type: 'INCLUDE'],
+                               [pattern: '.propsfile', type: 'EXCLUDE']])
         }
     }
 }
